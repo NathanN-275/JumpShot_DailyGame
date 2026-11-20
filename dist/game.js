@@ -3,6 +3,9 @@ const QUESTION_SECONDS = 30;
 const BEST_SCORE_KEY = "jumpshot-best-score";
 const DAILY_KEY = "jumpshot-day-";
 const DAILY_TZ = "America/New_York";
+const ROTATION_START = "2026-11-20";
+const ROTATION_DAYS = 21;
+const NAME_QUESTIONS_PER_GAME = 2;
 const dailyCalendar = new Intl.DateTimeFormat("en", { timeZone: DAILY_TZ, year: "numeric", month: "2-digit", day: "2-digit" });
 const TIERS = {
   dunk: { label: "DUNK", rarity: "Common", points: 10 },
@@ -146,7 +149,10 @@ const QUESTION_BANK = [
   },
 ];
 
-const questionsByPrompt = new Map([...NAME_QUESTIONS, ...QUESTION_BANK, ...EXTRA_HISTORY_QUESTIONS].map((question) => [question.prompt, question]));
+const originalHistoryQuestions = [...QUESTION_BANK, ...EXTRA_HISTORY_QUESTIONS];
+const allNameQuestions = [...NAME_QUESTIONS, ...MORE_NAME_QUESTIONS];
+const allHistoryQuestions = [...originalHistoryQuestions, ...MORE_HISTORY_QUESTIONS];
+const questionsByPrompt = new Map([...allNameQuestions, ...allHistoryQuestions].map((question) => [question.prompt, question]));
 
 const $ = (selector) => document.querySelector(selector);
 const form = $("#answer-form");
@@ -416,9 +422,9 @@ function finishRun() {
   setResult(`Final score: ${formatScore(score)} points. Best: ${formatScore(best)}.`, "FINAL", "is-good");
 }
 
-function dailyQuestions(day) {
+function dailyShuffle(day) {
   let seed = Math.imul(Number(day.replaceAll("-", "")), 0x9e3779b1) >>> 0;
-  function shuffled(questions) {
+  return (questions) => {
     const copy = [...questions];
     for (let index = copy.length - 1; index > 0; index -= 1) {
       seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
@@ -426,11 +432,21 @@ function dailyQuestions(day) {
       [copy[index], copy[pick]] = [copy[pick], copy[index]];
     }
     return copy;
+  };
+}
+
+function dailyQuestions(day) {
+  if (day >= ROTATION_START) {
+    // Subtract date-only values in UTC so daylight saving does not change the day index.
+    const elapsedDays = (Date.parse(day) - Date.parse(ROTATION_START)) / 86_400_000;
+    return dailyRotation[elapsedDays % ROTATION_DAYS];
   }
 
-  const starters = shuffled(NAME_QUESTIONS).slice(0, 2);
+  // Keep the original daily questions available for dates before the expanded rotation.
+  const shuffled = dailyShuffle(day);
+  const starters = shuffled(NAME_QUESTIONS).slice(0, NAME_QUESTIONS_PER_GAME);
   const categories = new Set();
-  const history = shuffled([...QUESTION_BANK, ...EXTRA_HISTORY_QUESTIONS]).filter((question) => {
+  const history = shuffled(originalHistoryQuestions).filter((question) => {
     const category = question.category ?? question.prompt;
     if (categories.has(category)) return false;
     categories.add(category);
@@ -438,6 +454,31 @@ function dailyQuestions(day) {
   });
   return [...starters, ...history.slice(0, RUN_LENGTH - starters.length)];
 }
+
+function buildDailyRotation() {
+  const shuffled = dailyShuffle(ROTATION_START);
+  const starters = shuffled(allNameQuestions);
+  const historyByCategory = new Map();
+  for (const question of shuffled(allHistoryQuestions)) {
+    const category = question.category;
+    if (!historyByCategory.has(category)) historyByCategory.set(category, []);
+    historyByCategory.get(category).push(question);
+  }
+
+  const categories = [...historyByCategory.values()];
+  const historyPerGame = RUN_LENGTH - NAME_QUESTIONS_PER_GAME;
+  const games = Array.from({ length: ROTATION_DAYS }, (_, dayIndex) => {
+    const first = dayIndex * NAME_QUESTIONS_PER_GAME;
+    const names = starters.slice(first, first + NAME_QUESTIONS_PER_GAME);
+    // Use the largest remaining categories first to spread them across the rotation.
+    categories.sort((left, right) => right.length - left.length);
+    const history = categories.slice(0, historyPerGame).map((questions) => questions.pop());
+    return [...names, ...shuffled(history)];
+  });
+  return shuffled(games);
+}
+
+const dailyRotation = buildDailyRotation();
 
 function startRun(day) {
   clearInterval(timerId);
