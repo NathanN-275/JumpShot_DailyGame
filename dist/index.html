@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#101725" />
+    <meta name="description" content="NBA history trivia. The deeper the cut, the bigger the bucket." />
+    <title>Jumpshot — NBA trivia arcade</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./game.js" defer></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Jumpshot home">
+          <span class="brand-ball" aria-hidden="true">●</span>
+          <span>JUMPSHOT<span class="brand-period">.</span></span>
+        </a>
+        <div class="scorebug" aria-label="Game score">
+          <div class="score-side score-blue"><span class="team-mark">B</span><span class="team-label">BLUE <small>YOU</small></span><strong id="score">000</strong></div>
+          <div class="score-center"><span>NBA TRIVIA</span><b id="period">TIP OFF</b></div>
+          <div class="score-side score-red"><span class="team-mark">R</span><span class="team-label">RED <small>DEFENSE</small></span><strong id="red-score">00</strong></div>
+        </div>
+      </header>
+
+      <section class="arena" aria-label="Pixel art basketball court">
+        <div class="arena-topline"><span class="arena-label"><i></i> THE HARDWOOD</span><span class="arena-season">HISTORY PACK <b>01</b></span></div>
+        <div class="stands">
+          <div class="crowd crowd-one" aria-hidden="true"></div>
+          <div class="ad-board"><span>KNOW YOUR GAME</span><b>BUCKETS ARE FOREVER</b><span>KNOW YOUR GAME</span></div>
+          <div class="crowd crowd-two" aria-hidden="true"></div>
+        </div>
+        <div class="court">
+          <div class="court-grain" aria-hidden="true"></div>
+          <div class="sideline"></div>
+          <div class="half-court-line"></div>
+          <div class="center-circle"><span>JS</span></div>
+          <div class="three-arc"></div>
+          <div class="paint"><div class="free-throw-circle"></div><div class="rim"><span></span></div><div class="backboard"></div></div>
+          <div class="shot-trail" id="shot-trail" aria-hidden="true"></div>
+          <div class="court-sprite sprite-blue blue-one" aria-hidden="true"><span class="sprite-shadow"></span><span class="sprite-head"></span><span class="sprite-body"></span><span class="sprite-arm"></span><span class="sprite-ball"></span><span class="sprite-legs"></span></div>
+          <div class="court-sprite sprite-blue blue-two" aria-hidden="true"><span class="sprite-shadow"></span><span class="sprite-head"></span><span class="sprite-body"></span><span class="sprite-arm"></span><span class="sprite-legs"></span></div>
+          <div class="court-sprite sprite-red red-one" aria-hidden="true"><span class="sprite-shadow"></span><span class="sprite-head"></span><span class="sprite-body"></span><span class="sprite-arm"></span><span class="sprite-legs"></span></div>
+          <div class="court-sprite sprite-red red-two" aria-hidden="true"><span class="sprite-shadow"></span><span class="sprite-head"></span><span class="sprite-body"></span><span class="sprite-arm"></span><span class="sprite-legs"></span></div>
+          <div class="court-sprite sprite-red red-three" aria-hidden="true"><span class="sprite-shadow"></span><span class="sprite-head"></span><span class="sprite-body"></span><span class="sprite-arm"></span><span class="sprite-legs"></span></div>
+          <div class="play-call" id="play-call" aria-live="polite"></div>
+          <div class="arena-caption"><span>HOME COURT</span><span>EST. 1946</span></div>
+          <div class="intro-card" id="intro-card">
+            <div class="intro-eyebrow"><span class="pixel-star">✦</span> A RARE ANSWER ARCADE</div>
+            <h1>KNOW THE<br /><em>GAME?</em></h1>
+            <p>NBA history. Seven possessions. How deep is your bag?</p>
+            <div class="rules-row"><span><b>07</b> QUESTIONS</span><span><b>30</b> SEC / SHOT</span><span><b>200</b> MAX BUCKET</span></div>
+            <button class="primary-button" id="start-button" type="button"><span>TIP OFF</span><b aria-hidden="true">↗</b></button>
+            <div class="intro-note">Niche answers score more. Trust your hoops IQ.</div>
+          </div>
+          <div class="finish-card hidden" id="finish-card" aria-live="polite">
+            <span class="finish-label">FINAL BUZZER</span>
+            <h2>THAT'S THE<br /><em>GAME.</em></h2>
+            <div class="final-score"><span>YOUR SCORE</span><strong id="final-score">000</strong></div>
+            <div class="best-line">PERSONAL BEST <b id="best-score">000</b></div>
+            <button class="primary-button" id="replay-button" type="button"><span>RUN IT BACK</span><b aria-hidden="true">↗</b></button>
+          </div>
+        </div>
+        <div class="arena-bottomline"><span>PIXEL COURT / ALL-TIME NBA</span><span class="live-tag"><i></i> LIVE GAME</span></div>
+      </section>
+
+      <section class="game-panel" aria-label="Trivia play">
+        <div class="play-meta">
+          <div class="question-count"><span class="meta-kicker">POSSESSION</span><strong><span id="question-number">—</span><small> / 07</small></strong></div>
+          <div class="tier-legend" aria-label="Answer points">
+            <span class="legend-dunk"><i></i>DUNK <b>10</b></span>
+            <span class="legend-jump"><i></i>JUMPSHOT <b>50</b></span>
+            <span class="legend-three"><i></i>THREE POINTER <b>100</b></span>
+            <span class="legend-half"><i></i>HALF-COURT <b>200</b></span>
+          </div>
+          <div class="timer-wrap"><span class="meta-kicker">SHOT CLOCK</span><div class="timer"><svg viewBox="0 0 44 44" aria-hidden="true"><circle class="timer-track" cx="22" cy="22" r="18"></circle><circle class="timer-progress" id="timer-progress" cx="22" cy="22" r="18"></circle></svg><strong id="timer">30</strong></div></div>
+        </div>
+        <div class="question-content" id="question-content">
+          <div class="prompt-copy"><span class="prompt-kicker">CALL YOUR SHOT</span><h2 id="prompt">Ready when you are.</h2><p id="prompt-hint">A deeper cut earns a bigger bucket.</p></div>
+          <form id="answer-form" class="answer-form" autocomplete="off">
+            <label class="sr-only" for="answer">Your NBA answer</label>
+            <div class="answer-entry"><span class="entry-icon" aria-hidden="true">⌕</span><input id="answer" name="answer" type="text" maxlength="64" placeholder="Type a player name…" disabled /><button id="submit-button" type="submit" disabled>SUBMIT <span>↵</span></button></div>
+            <div class="input-footer"><span id="spell-note"><i></i> Spell check on · aliases count</span><span>ONE SHOT ONLY</span></div>
+          </form>
+        </div>
+        <div class="result-strip" id="result-strip" aria-live="polite"><span class="result-icon">●</span><span class="result-message" id="result-message">Pick your answer. Make it count.</span><span class="result-points" id="result-points"></span></div>
+      </section>
+
+      <footer class="footer-row"><span>JUMPSHOT ARCADE <b>·</b> A LOVE LETTER TO NBA HISTORY</span><span>NO COIN NEEDED <b>✦</b> JUST HOOPS KNOWLEDGE</span></footer>
+    </main>
+  </body>
+</html>
