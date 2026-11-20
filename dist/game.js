@@ -156,6 +156,7 @@ const form = $("#answer-form");
 const answerInput = $("#answer");
 const submitButton = $("#submit-button");
 const scoreElement = $("#score");
+const redScoreElement = $("#red-score");
 const promptElement = $("#prompt");
 const questionNumberElement = $("#question-number");
 const timerElement = $("#timer");
@@ -170,6 +171,7 @@ const bestScoreElement = $("#best-score");
 let runQuestions = [];
 let questionIndex = 0;
 let score = 0;
+let redScore = 0;
 let secondsLeft = QUESTION_SECONDS;
 let timerId = null;
 let transitionId = null;
@@ -252,7 +254,7 @@ function setTimer(value) {
 
 function clearPlayState() {
   resetCourtShot();
-  document.body.classList.remove("is-shooting", "shot-made", "shot-missed");
+  document.body.classList.remove("is-shooting", "shot-made", "shot-missed", "red-fast-break");
   $("#play-call").textContent = "";
 }
 
@@ -298,6 +300,10 @@ function showQuestion() {
   startClock();
 }
 
+function pause(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function resolveQuestion(match) {
   if (locked) return;
   clearInterval(timerId);
@@ -318,7 +324,14 @@ async function resolveQuestion(match) {
     await playCourtShot("jumpshot", { miss: true });
     document.body.classList.add("shot-missed");
     $("#play-call").textContent = "BRICK";
-    setResult("The shot clock expired.", "0 pts", "is-miss");
+    await pause(750);
+    document.body.classList.replace("shot-missed", "red-fast-break");
+    $("#play-call").textContent = "TURNOVER";
+    await Promise.all([playRedFastBreak(), pause(500)]);
+    redScore += 2;
+    redScoreElement.textContent = String(redScore).padStart(2, "0");
+    $("#play-call").textContent = "FAST BREAK +2";
+    setResult("Shot clock expired. Red scored on the fast break.", "0 pts", "is-miss");
   }
 
   questionIndex += 1;
@@ -358,8 +371,9 @@ function startRun() {
   runQuestions = shuffle(QUESTION_BANK).slice(0, RUN_LENGTH);
   questionIndex = 0;
   score = 0;
+  redScore = 0;
   scoreElement.textContent = formatScore(score);
-  $("#red-score").textContent = "00";
+  redScoreElement.textContent = "00";
   finishCard.classList.add("hidden");
   introCard.classList.add("hidden");
   document.body.classList.remove("is-finished");

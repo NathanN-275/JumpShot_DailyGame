@@ -13,6 +13,9 @@ const heldBall = shooter.querySelector(".sprite-ball");
 const flightBall = court.querySelector(".shot-ball");
 const scoringRim = court.querySelector(".court-end-right .rim");
 const scoringNet = scoringRim.querySelector(".net");
+const redRunner = court.querySelector(".red-five");
+const redWing = court.querySelector(".red-four");
+const redRim = court.querySelector(".court-end-left .rim");
 const shotAnimations = [];
 
 function resetCourtShot() {
@@ -93,13 +96,72 @@ async function playCourtShot(tier, { miss = false } = {}) {
     await animateCourtPiece(flightBall, [
       { ...position(targetX, targetY), easing: "ease-out" },
       { ...position(targetX - 26 * scale, targetY - 22 * scale), offset: .38, easing: "ease-in" },
-      { ...position(targetX - 60 * scale, targetY + 48 * scale), opacity: 0 },
+      position(targetX - 60 * scale, targetY + 48 * scale),
     ], { duration: 410, fill: "forwards" }).finished;
-  } else {
-    animateCourtPiece(scoringNet, [{ scale: "1" }, { scale: ".77 1.45" }, { scale: "1" }], { duration: 260 });
-    await animateCourtPiece(flightBall, [position(basketX, basketY), { ...position(basketX, basketY + 22 * scale), opacity: 0 }], {
-      duration: 180, easing: "ease-in", fill: "forwards",
-    }).finished;
+    return;
   }
+  animateCourtPiece(scoringNet, [{ scale: "1" }, { scale: ".77 1.45" }, { scale: "1" }], { duration: 260 });
+  await animateCourtPiece(flightBall, [position(basketX, basketY), { ...position(basketX, basketY + 22 * scale), opacity: 0 }], {
+    duration: 180, easing: "ease-in", fill: "forwards",
+  }).finished;
+  flightBall.hidden = true;
+}
+
+async function playRedFastBreak() {
+  if (flightBall.hidden) return;
+
+  const view = court.getBoundingClientRect();
+  const center = (element) => {
+    const rect = element.getBoundingClientRect();
+    return { x: rect.left + rect.width / 2 - view.left, y: rect.top + rect.height / 2 - view.top };
+  };
+  const position = (x, y) => ({ left: `${x / view.width * 100}%`, top: `${y / view.height * 100}%` });
+  const scale = redRunner.getBoundingClientRect().height / redRunner.offsetHeight;
+  const runnerStart = center(redRunner);
+  const rebound = center(flightBall);
+  const basket = center(redRim);
+  const handOffset = 18 * scale;
+  const pickup = { x: rebound.x + handOffset, y: rebound.y - 8 * scale };
+  const drive = { x: basket.x + 34 * scale, y: basket.y + 48 * scale };
+  const jump = { x: basket.x + 20 * scale, y: basket.y + 12 * scale };
+  const runnerAt = ({ x, y }) => position(x, y);
+
+  await animateCourtPiece(redRunner, [runnerAt(runnerStart), runnerAt(pickup)], {
+    duration: 200, easing: "ease-out", fill: "forwards",
+  }).finished;
+
+  const duration = 1160;
+  const sprintPath = Array.from({ length: 25 }, (_, i) => {
+    const t = i / 24;
+    return {
+      x: pickup.x + (drive.x - pickup.x) * t,
+      y: pickup.y + (drive.y - pickup.y) * t + 22 * scale * Math.sin(Math.PI * t),
+    };
+  });
+  const dribbles = sprintPath.map(({ x, y }, i) => position(x - handOffset, y + (8 + 15 * Math.abs(Math.sin(i * Math.PI / 4))) * scale));
+  const wingStart = center(redWing);
+  animateCourtPiece(redWing, [runnerAt(wingStart), position(view.width * .28, view.height * .67)], {
+    duration, fill: "forwards",
+  });
+  for (const player of [redRunner, redWing]) {
+    animateCourtPiece(player.querySelector(".sprite-legs"), [{ rotate: "-20deg" }, { rotate: "20deg" }, { rotate: "-20deg" }], {
+      duration: 180, iterations: duration / 180,
+    });
+  }
+  animateCourtPiece(redRunner, sprintPath.map(runnerAt), { duration, fill: "forwards" });
+  await animateCourtPiece(flightBall, dribbles, { duration, fill: "forwards" }).finished;
+
+  animateCourtPiece(redRunner, [runnerAt(drive), { ...runnerAt(jump), offset: .45 }, runnerAt(drive)], {
+    duration: 500, fill: "forwards",
+  });
+  animateCourtPiece(redRim.querySelector(".net"), [{ scale: "1" }, { scale: ".77 1.45" }, { scale: "1" }], {
+    delay: 360, duration: 260,
+  });
+  await animateCourtPiece(flightBall, [
+    dribbles.at(-1),
+    { ...position(jump.x - handOffset, jump.y - 15 * scale), offset: .45 },
+    { ...runnerAt(basket), offset: .72 },
+    { ...position(basket.x, basket.y + 20 * scale), opacity: 0 },
+  ], { duration: 500, fill: "forwards" }).finished;
   flightBall.hidden = true;
 }
