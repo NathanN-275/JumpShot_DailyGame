@@ -251,14 +251,14 @@ function setTimer(value) {
 }
 
 function clearPlayState() {
-  document.body.classList.remove("anim-dunk", "anim-jumpshot", "anim-three", "anim-half", "is-miss", "is-corrected");
+  resetCourtShot();
+  document.body.classList.remove("is-shooting", "shot-made", "is-miss");
   $("#play-call").textContent = "";
-  $("#shot-trail").style.animation = "none";
-  requestAnimationFrame(() => { $("#shot-trail").style.animation = ""; });
 }
 
-function setResult(message, points = "", state = "") {
+function setResult(message = "", points = "", state = "") {
   resultStrip.classList.remove("is-good", "is-miss", "is-corrected");
+  resultStrip.classList.toggle("hidden", !message);
   if (state) resultStrip.classList.add(state);
   resultMessage.textContent = message;
   resultPoints.textContent = points;
@@ -293,30 +293,23 @@ function showQuestion() {
   promptElement.textContent = question.prompt;
   $("#prompt-hint").textContent = question.hint;
   answerInput.value = "";
-  setResult("Pick your answer. Make it count.");
+  setResult();
   setFormEnabled(true);
   startClock();
 }
 
-function animateShot(tier) {
-  const animation = { dunk: "anim-dunk", jumpshot: "anim-jumpshot", three: "anim-three", half: "anim-half" }[tier];
-  const detail = TIERS[tier];
-  document.body.classList.add(animation);
-  $("#play-call").textContent = `${detail.label}  +${detail.points}`;
-}
-
-function resolveQuestion(match, missMessage = "") {
+async function resolveQuestion(match, missMessage = "") {
   if (locked) return;
   clearInterval(timerId);
   setFormEnabled(false);
-  const question = runQuestions[questionIndex];
-  const tier = match ? TIERS[match.tier] : null;
-
   if (match) {
+    const tier = TIERS[match.tier];
+    document.body.classList.add("is-shooting");
+    await playCourtShot(match.tier);
     score += tier.points;
     scoreElement.textContent = formatScore(score);
-    $("#red-score").textContent = "00";
-    animateShot(match.tier);
+    document.body.classList.add("shot-made");
+    $("#play-call").textContent = `${tier.label} +${tier.points}`;
     const correctedText = match.corrected ? `Spelling fixed to ${match.name}.` : `${match.name} is in the answer bank.`;
     setResult(`${correctedText} ${tier.rarity} · ${tier.label}`, `+${tier.points} pts`, "is-good");
     if (match.corrected) resultStrip.classList.add("is-corrected");

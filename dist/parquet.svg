@@ -1,14 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="160" height="96" viewBox="0 0 160 96" shape-rendering="crispEdges">
-  <rect width="160" height="96" fill="#c99a61"/>
-  <g stroke="#93643b" stroke-width="2">
-    <path fill="#d9ad71" d="M0 0h50v29H0zM54 0h50v29H54zM108 0h52v29h-52z"/>
-    <path fill="#c28c51" d="M0 33h76v29H0zM80 33h80v29H80z"/>
-    <path fill="#d3a469" d="M0 66h50v30H0zM54 66h50v30H54zM108 66h52v30h-52z"/>
-  </g>
-  <g fill="none" stroke="#efce9b" stroke-width="2" opacity=".45">
-    <path d="M5 7h35m-35 5h23m34-5h33m-33 5h20m36-5h35m-35 5h22M8 40h55m-55 6h36m45-6h59m-58 6h42M5 73h34m-34 6h22m36-6h35m-35 6h23m35-6h34m-34 6h24"/>
-  </g>
-  <g fill="#805a37" opacity=".55">
-    <path d="M46 14h4v3h-4zM98 52h4v3h-4zM20 82h4v3h-4zM135 19h4v3h-4zM65 38h4v3h-4z"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" preserveAspectRatio="none" shape-rendering="crispEdges">
+  <defs>
+    <g id="boards">
+      <path fill="#d6a363" d="M0 0h60v60H0z"/>
+      <path fill="#e4b87c" d="M0 2h60v8H0zm0 21h60v7H0zm0 17h60v5H0zm0 12h60v5H0z"/>
+      <path fill="#bb8549" d="M0 11h60v2H0zm0 7h60v1H0zm0 12h60v2H0zm0 8h60v1H0zm0 10h60v2H0zm0 10h60v2H0z"/>
+      <path fill="#f5d29a" d="M3 3h22v1H3zm27 4h21v1H30zm-10 8h34v1H20zM3 25h36v1H3zm26 17h26v1H29zM7 54h25v1H7z"/>
+      <path fill="#a47040" d="M11 0h1v11h-1zm34 12h1v8h-1zM8 20h1v10H8zm28 11h1v8h-1zM17 40h1v9h-1zm28 9h1v11h-1z" opacity=".6"/>
+    </g>
+  </defs>
+  <use href="#boards"/>
+  <use href="#boards" transform="translate(120) rotate(90)"/>
+  <use href="#boards" transform="translate(60 60) rotate(90)"/>
+  <use href="#boards" transform="translate(60 60)"/>
+  <path fill="#9b663c" opacity=".2" d="M60 0h60v60H60zM0 60h60v60H0z"/>
 </svg>

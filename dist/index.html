@@ -10,6 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./styles.css" />
+    <script src="./court.js" defer></script>
     <script src="./game.js" defer></script>
   </head>
   <body>
@@ -33,13 +34,21 @@
           <div class="crowd crowd-two" aria-hidden="true"></div>
         </div>
         <div class="court">
-          <div class="court-grain" aria-hidden="true"></div>
-          <div class="sideline"></div>
-          <div class="half-court-line"></div>
-          <div class="center-circle"><span>JS</span></div>
-          <div class="three-arc"></div>
-          <div class="paint"><div class="free-throw-circle"></div><div class="rim"><span></span></div><div class="backboard"></div></div>
-          <div class="shot-trail" id="shot-trail" aria-hidden="true"></div>
+          <div class="court-floor" aria-hidden="true">
+            <div class="half-court-line"></div>
+            <div class="center-circle"><span>JS</span></div>
+            <div class="court-end court-end-left">
+              <div class="three-arc"></div><div class="paint"></div>
+              <div class="free-throw-circle"></div><div class="restricted-arc"></div>
+              <div class="hoop"><div class="backboard"></div><div class="rim"><span class="net"></span></div></div>
+            </div>
+            <div class="court-end court-end-right">
+              <div class="three-arc"></div><div class="paint"></div>
+              <div class="free-throw-circle"></div><div class="restricted-arc"></div>
+              <div class="hoop"><div class="backboard"></div><div class="rim"><span class="net"></span></div></div>
+            </div>
+          </div>
+          <div class="shot-ball" aria-hidden="true" hidden></div>
           <div class="court-sprite sprite-blue blue-one" aria-hidden="true"><span class="sprite-shadow"></span><span class="sprite-head"></span><span class="sprite-body"></span><span class="sprite-arm"></span><span class="sprite-ball"></span><span class="sprite-legs"></span></div>
           <div class="court-sprite sprite-blue blue-two" aria-hidden="true"><span class="sprite-shadow"></span><span class="sprite-head"></span><span class="sprite-body"></span><span class="sprite-arm"></span><span class="sprite-legs"></span></div>
           <div class="court-sprite sprite-blue blue-three" aria-hidden="true"><span class="sprite-shadow"></span><span class="sprite-head"></span><span class="sprite-body"></span><span class="sprite-arm"></span><span class="sprite-legs"></span></div>
@@ -49,7 +58,6 @@
           <div class="court-sprite sprite-red red-three" aria-hidden="true"><span class="sprite-shadow"></span><span class="sprite-head"></span><span class="sprite-body"></span><span class="sprite-arm"></span><span class="sprite-legs"></span></div>
           <div class="court-sprite sprite-red red-four" aria-hidden="true"><span class="sprite-shadow"></span><span class="sprite-head"></span><span class="sprite-body"></span><span class="sprite-arm"></span><span class="sprite-legs"></span></div>
           <div class="play-call" id="play-call" aria-live="polite"></div>
-          <div class="arena-caption"><span>HOME COURT</span><span>EST. 1946</span></div>
           <div class="intro-card" id="intro-card">
             <div class="intro-eyebrow"><span class="pixel-star">✦</span> A RARE ANSWER ARCADE</div>
             <h1>KNOW THE<br /><em>GAME?</em></h1>
@@ -66,7 +74,6 @@
             <button class="primary-button" id="replay-button" type="button"><span>RUN IT BACK</span><b aria-hidden="true">↗</b></button>
           </div>
         </div>
-        <div class="arena-bottomline"><span>DEMO V0.1 / ALL-TIME NBA</span><span class="live-tag"><i></i> LIVE GAME</span></div>
       <section class="game-panel" aria-label="Trivia play">
         <div class="play-meta">
           <div class="question-count"><span class="meta-kicker">POSSESSION</span><strong><span id="question-number">—</span><small> / 07</small></strong></div>
@@ -80,8 +87,9 @@
             <div class="input-footer"><span id="spell-note"><i></i> Spell check on · aliases count</span><span>ONE SHOT ONLY</span></div>
           </form>
         </div>
-        <div class="result-strip" id="result-strip" aria-live="polite"><span class="result-icon">●</span><span class="result-message" id="result-message">Pick your answer. Make it count.</span><span class="result-points" id="result-points"></span></div>
+        <div class="result-strip hidden" id="result-strip" aria-live="polite"><span class="result-icon" aria-hidden="true"></span><span class="result-message" id="result-message"></span><span class="result-points" id="result-points"></span></div>
       </section>
+        <div class="arena-bottomline"><span>DEMO V0.1 / ALL-TIME NBA</span><span class="live-tag"><i></i> LIVE GAME</span></div>
       </section>
 
       <footer class="footer-row"><span>JUMPSHOT ARCADE <b>·</b> A LOVE LETTER TO NBA HISTORY</span><span>NO COIN NEEDED <b>✦</b> JUST HOOPS KNOWLEDGE</span></footer>

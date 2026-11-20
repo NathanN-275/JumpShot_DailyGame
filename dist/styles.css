@@ -47,25 +47,30 @@ button { color: inherit; }
 .ad-board { width: 48%; min-width: 270px; height: 48px; padding: 4px 10px; display: flex; align-items: center; justify-content: space-around; gap: 8px; border: 4px solid #596579; outline: 2px solid #182233; background: #15243a; color: #80d3f3; font: 9px var(--pixel); text-align: center; }
 .ad-board b { color: #f7e7c4; font-size: 9px; }
 .ad-board span { color: #9fb5ce; font-size: 7px; }
-.court { height: auto; min-height: 400px; flex: 1 1 auto; position: relative; overflow: hidden; isolation: isolate; background-color: #bd8950; background-image: url("./parquet.svg"); background-size: 80px 48px; border: 6px solid #fff4d9; outline: 1px solid #8f5f35; margin: 0 10px 7px; }
-.court::before { content: ""; position: absolute; inset: 14px; border: 3px solid rgba(255,244,217,.88); pointer-events: none; }
-.court-grain { position: absolute; inset: 0; z-index: -1; opacity: .25; background-image: repeating-linear-gradient(177deg, transparent 0 6px, rgba(76,47,26,.36) 6px 8px, transparent 8px 19px); mix-blend-mode: multiply; }
-.sideline { position: absolute; left: 0; top: 0; bottom: 0; width: 50%; border-right: 3px solid rgba(255,244,217,.85); }
-.half-court-line { position: absolute; left: 50%; top: 0; bottom: 0; border-right: 3px solid rgba(255,244,217,.9); }
-.center-circle { position: absolute; left: 50%; top: 50%; width: 185px; height: 185px; transform: translate(-50%, -50%); border: 9px solid rgba(255,244,217,.9); border-radius: 50%; display: grid; place-items: center; background: #24734f; box-shadow: inset 0 0 0 6px #f3e7c9; }
-.center-circle span { width: 96px; height: 96px; display: grid; place-items: center; border-radius: 50%; background: #69bb64; color: #174c39; font: 14px var(--pixel); border: 5px solid #20714d; box-shadow: inset 0 0 0 4px #46945a; }
-.three-arc { position: absolute; right: 8%; top: 50%; width: 52%; height: 122%; transform: translateY(-50%); border: 4px solid rgba(255,244,217,.88); border-right-color: transparent; border-radius: 50% 0 0 50%; }
-.paint { position: absolute; top: 50%; right: -1%; width: 24%; height: 55%; transform: translateY(-50%); background: #087446; border: 4px solid rgba(255,244,217,.94); border-right: 0; }
-.paint::before { content: ""; position: absolute; left: -20%; top: 50%; width: 43%; aspect-ratio: 1; transform: translateY(-50%); border: 4px solid rgba(255,244,217,.9); border-radius: 50%; }
-.free-throw-circle { position: absolute; left: 15%; top: 50%; width: 35%; height: 60%; transform: translateY(-50%); border: 3px dashed rgba(255,244,217,.88); border-radius: 50%; }
-.rim { position: absolute; right: 14%; top: 50%; z-index: 4; width: 45px; height: 22px; transform: translateY(-50%); border: 5px solid #f1a55d; border-radius: 50%; box-shadow: 0 0 0 2px #9b533a; }
-.rim span { position: absolute; left: 0; right: 0; top: 10px; height: 14px; border-inline: 3px dotted #fff1d7; }
-.backboard { position: absolute; right: 8%; top: 50%; width: 8px; height: 94px; transform: translateY(-50%); background: #f8edd6; box-shadow: 3px 0 #91785e; }
-.arena-caption { position: absolute; bottom: 12px; left: 18px; right: 18px; z-index: 2; display: flex; justify-content: space-between; color: #fff5dc; font: 8px var(--pixel); text-shadow: 2px 2px #87592f; }
-.shot-trail { position: absolute; right: 13%; top: 45%; z-index: 7; width: 17px; height: 17px; border-radius: 50%; opacity: 0; background: radial-gradient(circle at 35% 30%, #ffe7a4 0 20%, #df7d35 21% 100%); box-shadow: 0 0 10px #ffcf80; }
-.shot-trail::after { content: ""; position: absolute; inset: -15px; border: 2px dashed #fff4d9; border-radius: 50%; }
+/* The floor is foreshortened. Players and basket hardware stay upright. */
+.court { flex: 1 0 auto; min-height: clamp(290px, 48svh, 540px); position: relative; overflow: hidden; isolation: isolate; background: #12664c; }
+.court-floor { --line: #fff1d5; position: absolute; inset: 6% 2.3% 8%; border: 3px solid var(--line); background: url("./parquet.svg") center / 134px 78px #c99755; box-shadow: 0 5px 0 #084c38, inset 0 0 40px #7d411e4d; }
+.half-court-line { position: absolute; left: 50%; top: 0; bottom: 0; border-left: 3px solid var(--line); transform: translateX(-50%); }
+.center-circle { position: absolute; left: 50%; top: 50%; width: 17%; height: 26%; transform: translate(-50%, -50%); border: 3px solid var(--line); border-radius: 50%; display: grid; place-items: center; background: #124f50; box-shadow: inset 0 0 0 4px #dfc27a; }
+.center-circle span { color: #fff1d5; font: clamp(9px, 1.6vw, 22px) var(--pixel); transform: scaleY(.85); }
+.court-end { position: absolute; inset: 0 0 0 auto; width: 35%; }
+.court-end-left { inset: 0 auto 0 0; transform: scaleX(-1); }
+.three-arc { position: absolute; inset: 7% 0; border: 3px solid var(--line); border-right: 0; border-radius: 70% 0 0 70% / 50% 0 0 50%; }
+.paint { position: absolute; top: 34%; right: 0; width: 55%; height: 32%; border: 3px solid var(--line); border-right: 0; background: #1b6d58; box-shadow: inset 0 4px #72a47c50, inset 0 -4px #0b4c3f; }
+.free-throw-circle { position: absolute; top: 34%; right: 41%; width: 28%; height: 32%; border: 3px solid var(--line); border-radius: 50%; border-right-style: dashed; }
+.restricted-arc { position: absolute; top: 41%; right: 6%; width: 15%; height: 18%; border: 2px solid var(--line); border-right-color: transparent; border-radius: 50%; }
+.hoop { position: absolute; z-index: 4; top: 35%; right: 0; width: 22%; height: 31%; }
+.hoop::before { content: ""; position: absolute; right: 0; top: 42%; width: 80%; height: 12%; transform: skewY(-9deg); background: #102a2860; }
+.hoop::after { content: ""; position: absolute; right: 0; top: 12%; width: 40%; height: 4px; background: #9c5843; box-shadow: 0 2px #57372f; }
+.backboard { position: absolute; z-index: 1; top: -11%; right: 26%; width: 12%; min-width: 5px; height: 58%; transform: skewY(-12deg); border: 2px solid #9eb2b5; background: #e6ece3; box-shadow: 3px 2px #536867; }
+.rim { position: absolute; z-index: 2; right: 35%; top: 15%; width: 46%; height: clamp(7px, 1.5vw, 15px); transform: translateY(-50%); border: 3px solid #f5964b; border-radius: 50%; box-shadow: 0 -1px #fff0ae, 0 2px #853e27; }
+.net { position: absolute; top: 55%; left: -1px; right: -1px; height: 14px; transform-origin: top; clip-path: polygon(0 0, 100% 0, 75% 100%, 25% 100%); background: repeating-linear-gradient(60deg, #fff1d5 0 1px, transparent 1px 4px), repeating-linear-gradient(-60deg, #fff1d5 0 1px, transparent 1px 4px); }
+.shot-ball { position: absolute; z-index: 7; width: 12px; height: 12px; border: 2px solid #784326; border-radius: 50%; background: #e88536; box-shadow: inset 2px 1px #ffc071; transform: translate(-50%, -50%); }
 .court-sprite { position: absolute; z-index: 5; width: 34px; height: 58px; transform: translate(-50%, -50%); image-rendering: pixelated; filter: drop-shadow(4px 5px 0 rgba(49,34,24,.3)); }
 .sprite-blue { --jersey: #276fe0; --trim: #99d5ff; }
+.court-sprite { --skin: #9a5c40; --hair: #241f24; }
+.blue-two, .red-three { --skin: #dbab78; --hair: #563528; }
+.blue-three, .red-one { --skin: #744633; }
 .sprite-red { --jersey: #b6383b; --trim: #ffb3a0; }
 .blue-one { left: 61%; top: 54%; z-index: 6; }
 .blue-two { left: 42%; top: 40%; transform: translate(-50%, -50%) scale(.85); }
@@ -75,11 +80,11 @@ button { color: inherit; }
 .red-two { left: 81%; top: 52%; transform: translate(-50%, -50%) scale(.9); }
 .red-three { left: 56%; top: 24%; transform: translate(-50%, -50%) scale(.78); }
 .red-four { left: 87%; top: 40%; transform: translate(-50%, -50%) scale(.82); }
-.sprite-head { position: absolute; width: 20px; height: 17px; left: 7px; top: 1px; background: #9a5c40; border: 2px solid #2a2730; box-shadow: inset 0 -3px #754633, 4px 4px 0 #36292a; }
-.sprite-head::before { content: ""; position: absolute; left: -2px; top: -5px; width: 17px; height: 7px; background: #241f24; box-shadow: 5px 3px 0 #241f24, -2px 6px 0 #241f24; }
+.sprite-head { position: absolute; width: 20px; height: 17px; left: 7px; top: 1px; background: var(--skin); border: 2px solid #2a2730; box-shadow: inset 0 -3px #754633, 4px 4px 0 #36292a; }
+.sprite-head::before { content: ""; position: absolute; left: -2px; top: -5px; width: 17px; height: 7px; background: var(--hair); box-shadow: 5px 3px 0 var(--hair), -2px 6px 0 var(--hair); }
 .sprite-head::after { content: ""; position: absolute; left: 11px; top: 6px; width: 3px; height: 3px; background: #201f25; box-shadow: 5px 3px 0 #e5b98e; }
 .sprite-body { position: absolute; left: 4px; top: 18px; width: 26px; height: 20px; background: var(--jersey); border: 3px solid #282d39; box-shadow: inset 0 -4px var(--trim); }
-.sprite-body::before { content: ""; position: absolute; right: -9px; top: 1px; width: 7px; height: 17px; background: #9a5c40; border: 2px solid #282d39; transform: rotate(-12deg); }
+.sprite-body::before { content: ""; position: absolute; right: -9px; top: 1px; width: 7px; height: 17px; background: var(--skin); border: 2px solid #282d39; transform: rotate(-12deg); }
 .sprite-body::after { content: ""; position: absolute; left: 8px; top: 1px; height: 13px; width: 3px; background: var(--trim); }
 .sprite-arm { position: absolute; left: -3px; top: 22px; width: 9px; height: 21px; background: #a26548; border: 2px solid #292b35; transform: rotate(16deg); }
 .sprite-legs { position: absolute; left: 8px; top: 36px; width: 8px; height: 18px; background: #303543; box-shadow: 11px 3px 0 -1px #303543, -2px 16px 0 -1px #e8dfcd, 9px 19px 0 -1px #e8dfcd; }
@@ -88,6 +93,9 @@ button { color: inherit; }
 .blue-one .sprite-shadow::before { content: ""; position: absolute; left: -5px; top: -8px; width: 38px; height: 18px; border: 4px solid #f8f1da; border-bottom-color: #38d47c; border-radius: 50%; }
 .sprite-ball { display: none; position: absolute; right: -5px; top: 32px; z-index: 2; width: 12px; height: 12px; border-radius: 50%; background: #dc7b35; border: 2px solid #754628; box-shadow: inset 3px 0 0 #f2ae67; }
 .blue-one .sprite-ball { display: block; }
+.blue-one .sprite-arm { left: auto; right: -4px; z-index: 2; transform-origin: 50% 2px; transform: rotate(-16deg); }
+.blue-one .sprite-body::before { left: -9px; right: auto; }
+.blue-one .sprite-legs { transform-origin: top; }
 .play-call { position: absolute; top: 17%; left: 50%; z-index: 10; transform: translate(-50%, -10px) scale(.9); opacity: 0; padding: 11px 16px; border: 3px solid #fff0c9; border-radius: 4px; background: #12223b; color: var(--yellow); font: 12px var(--pixel); text-align: center; text-shadow: 2px 2px #57401d; box-shadow: 0 5px 0 #111a28; white-space: nowrap; }
 .arena-topline, .arena-bottomline { text-transform: uppercase; }
 .arena-bottomline { flex-basis: 28px; height: 28px; background: #087447; color: #d9ebd7; }
@@ -115,7 +123,7 @@ button { color: inherit; }
 .best-line b { color: var(--green); margin-left: 6px; }
 .hidden { display: none !important; }
 
-.game-panel { position: absolute; z-index: 8; left: 3%; right: 3%; bottom: 37px; overflow: hidden; border: 1px solid #607088; border-radius: 8px; background: linear-gradient(115deg, rgba(20,31,48,.97), rgba(24,35,52,.95)); box-shadow: 0 6px 0 #0b111b, 0 10px 24px #0a111d88; backdrop-filter: blur(2px); }
+.game-panel { position: relative; z-index: 8; margin: -42px 3% 0; overflow: hidden; border: 1px solid #607088; border-radius: 8px; background: linear-gradient(115deg, rgba(20,31,48,.97), rgba(24,35,52,.95)); box-shadow: 0 6px 0 #0b111b, 0 10px 24px #0a111d88; backdrop-filter: blur(2px); }
 .play-meta { min-height: 68px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 18px; border-bottom: 1px solid #324156; }
 .question-count { display: flex; align-items: center; gap: 10px; }
 .meta-kicker { display: block; margin-bottom: 4px; color: #8796a9; font: 7px var(--pixel); white-space: nowrap; }
@@ -161,25 +169,13 @@ button { color: inherit; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 
 body.is-playing .intro-card, body.is-finished .intro-card { display: none; }
-body:not(.is-playing) .game-panel { visibility: hidden; }
+body:not(.is-playing) .game-panel { display: none; }
 body.is-playing .game-panel { border-color: #63748b; }
 body.is-playing .court-sprite.blue-one { animation: idle-bounce 1.3s steps(2, end) infinite; }
-body.anim-dunk .blue-one { animation: dunk .75s cubic-bezier(.25,.7,.2,1) both !important; }
-body.anim-jumpshot .blue-one { animation: jump-shot .8s cubic-bezier(.3,.7,.2,1) both !important; }
-body.anim-three .blue-one { animation: long-shot .9s cubic-bezier(.28,.7,.17,1) both !important; }
-body.anim-half .blue-one { animation: half-court .95s cubic-bezier(.2,.65,.12,1) both !important; }
-body.anim-dunk .shot-trail, body.anim-jumpshot .shot-trail, body.anim-three .shot-trail, body.anim-half .shot-trail { animation: ball-flight .8s ease-in both; }
-body.anim-dunk .play-call, body.anim-jumpshot .play-call, body.anim-three .play-call, body.anim-half .play-call { animation: callout .9s ease both; }
+body.is-shooting .court-sprite.blue-one { animation: none; z-index: 8; }
+body.shot-made .play-call { animation: callout 1.1s ease both; }
 body.is-miss .blue-one { animation: miss-wilt .55s ease both; }
-body.is-playing .intro-card { display: none; }
-body.is-playing .court-sprite { filter: drop-shadow(4px 5px 0 rgba(49,34,24,.3)); }
-body.is-playing #answer:not(:disabled) { background: transparent; }
 @keyframes idle-bounce { 50% { translate: 0 -3px; } }
-@keyframes dunk { 0% { translate: 0 0; } 45% { translate: 6% -30%; scale: 1.2; } 75% { translate: 18% -13%; } 100% { translate: 15% 0; } }
-@keyframes jump-shot { 0% { translate: 0 0; } 40% { translate: 4% -28%; rotate: -8deg; } 100% { translate: 28% -14%; rotate: 0deg; } }
-@keyframes long-shot { 0% { translate: 0 0; } 35% { translate: 5% -24%; } 100% { translate: 45% -6%; } }
-@keyframes half-court { 0% { translate: 0 0; } 32% { translate: -8% -28%; rotate: -10deg; } 100% { translate: 62% -17%; } }
-@keyframes ball-flight { 0% { opacity: 1; translate: -20vw 25vh; scale: .7; } 50% { opacity: 1; } 100% { opacity: 0; translate: 0 0; scale: .5; } }
 @keyframes callout { 0% { opacity: 0; transform: translate(-50%, 12px) scale(.7); } 20%, 75% { opacity: 1; transform: translate(-50%, 0) scale(1); } 100% { opacity: 0; transform: translate(-50%, -9px) scale(1.05); } }
 @keyframes miss-wilt { 30% { rotate: -10deg; translate: 0 7px; } 100% { rotate: 0; translate: 0 0; } }
 
@@ -210,16 +206,14 @@ body.is-playing #answer:not(:disabled) { background: transparent; }
   .ad-board { height: 33px; min-width: 200px; width: 68%; padding: 3px 4px; border-width: 3px; font-size: 6px; }
   .ad-board b { font-size: 6px; }
   .ad-board span { display: none; }
-  .court { height: auto; min-height: 390px; border-width: 4px; }
-  .court::before { inset: 8px; border-width: 2px; }
-  .center-circle { width: 100px; height: 100px; border-width: 5px; box-shadow: inset 0 0 0 4px #f3e7c9; }
-  .center-circle span { width: 54px; height: 54px; font-size: 9px; border-width: 3px; }
-  .three-arc { border-width: 2px; }
-  .paint { border-width: 2px; }
-  .free-throw-circle, .paint::before { border-width: 2px; }
-  .rim { width: 28px; height: 15px; border-width: 3px; }
-  .rim span { top: 7px; height: 9px; }
-  .backboard { width: 5px; height: 64px; }
+  .court { min-height: clamp(215px, 33svh, 365px); }
+  .game-panel { margin-top: -28px; }
+  .court-floor { border-width: 2px; background-size: 92px 54px; }
+  .half-court-line { border-width: 2px; }
+  .center-circle { border-width: 2px; box-shadow: inset 0 0 0 2px #dfc27a; }
+  .three-arc, .paint, .free-throw-circle, .restricted-arc, .rim { border-width: 2px; }
+  .net { height: 8px; }
+  .shot-ball { width: 9px; height: 9px; }
   .court-sprite { scale: .75; }
   .blue-one { left: 62%; top: 45%; }
   .blue-two { left: 43%; top: 34%; }
@@ -229,7 +223,6 @@ body.is-playing #answer:not(:disabled) { background: transparent; }
   .red-two { left: 84%; top: 48%; }
   .red-three { left: 57%; top: 22%; }
   .red-four { left: 89%; top: 34%; }
-  .arena-caption { left: 10px; right: 10px; bottom: 7px; font-size: 6px; }
   .intro-card, .finish-card { padding: 18px 16px 14px; }
   .intro-eyebrow, .finish-label { font-size: 6px; }
   .intro-card h1, .finish-card h2 { margin: 10px 0 7px; font-size: 16px; }
@@ -266,7 +259,6 @@ body.is-playing #answer:not(:disabled) { background: transparent; }
 @media (max-height: 760px) and (min-width: 621px) {
   .app-shell { gap: 8px; padding-top: 10px; }
   .arena { min-height: 520px; }
-  .court { height: auto; min-height: 340px; }
   .stands { height: 50px; flex-basis: 50px; }
   .question-content { padding-block: 12px 8px; }
 }
