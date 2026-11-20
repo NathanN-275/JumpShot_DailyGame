@@ -2,10 +2,10 @@ const RUN_LENGTH = 7;
 const QUESTION_SECONDS = 30;
 const BEST_SCORE_KEY = "jumpshot-best-score";
 const TIERS = {
-  dunk: { label: "DUNK", points: 10 },
-  jumpshot: { label: "JUMPSHOT", points: 50 },
-  three: { label: "THREE POINTER", points: 100 },
-  half: { label: "HALF-COURT SHOT", points: 200 },
+  dunk: { label: "DUNK", rarity: "Common", points: 10 },
+  jumpshot: { label: "JUMPSHOT", rarity: "Uncommon", points: 50 },
+  three: { label: "THREE POINTER", rarity: "Epic", points: 100 },
+  half: { label: "HALF-COURT SHOT", rarity: "Super niche", points: 200 },
 };
 
 // The first answer pack is curated by prompt. A new answer belongs in a question's bank before it can score.
@@ -318,7 +318,7 @@ function resolveQuestion(match, missMessage = "") {
     $("#red-score").textContent = "00";
     animateShot(match.tier);
     const correctedText = match.corrected ? `Spelling fixed to ${match.name}.` : `${match.name} is in the answer bank.`;
-    setResult(`${correctedText} ${tier.label}.`, `+${tier.points}`, "is-good");
+    setResult(`${correctedText} ${tier.rarity} · ${tier.label}`, `+${tier.points} pts`, "is-good");
     if (match.corrected) resultStrip.classList.add("is-corrected");
   } else {
     clearPlayState();
