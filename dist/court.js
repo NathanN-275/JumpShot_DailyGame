@@ -27,7 +27,7 @@ function animateCourtPiece(element, frames, options) {
   return animation;
 }
 
-async function playCourtShot(tier) {
+async function playCourtShot(tier, { miss = false } = {}) {
   if (matchMedia("(prefers-reduced-motion: reduce)").matches || !shooter.animate) return;
 
   const motion = SHOT_MOTION[tier];
@@ -76,19 +76,30 @@ async function playCourtShot(tier) {
     duration: 340, easing: "ease-in", fill: "forwards",
   });
 
-  const arcHeight = Math.min(launchY, basketY) * motion.arc * 2;
+  const targetX = miss ? basketX - rim.width / 2 : basketX;
+  const targetY = miss ? basketY - 4 * scale : basketY;
+  const arcHeight = Math.min(launchY, targetY) * motion.arc * 2;
   const flight = Array.from({ length: 17 }, (_, index) => {
     const t = index / 16;
-    const x = launchX + (basketX - launchX) * t;
-    const y = launchY + (basketY - launchY) * t - 4 * arcHeight * t * (1 - t);
+    const x = launchX + (targetX - launchX) * t;
+    const y = launchY + (targetY - launchY) * t - 4 * arcHeight * t * (1 - t);
     return position(x, y);
   });
 
   flightBall.hidden = false;
   await animateCourtPiece(flightBall, flight, { duration: motion.flight, fill: "forwards" }).finished;
-  animateCourtPiece(scoringNet, [{ scale: "1" }, { scale: ".77 1.45" }, { scale: "1" }], { duration: 260 });
-  await animateCourtPiece(flightBall, [position(basketX, basketY), { ...position(basketX, basketY + 22 * scale), opacity: 0 }], {
-    duration: 180, easing: "ease-in", fill: "forwards",
-  }).finished;
+  if (miss) {
+    animateCourtPiece(scoringRim, [{ rotate: "0deg" }, { rotate: "-7deg" }, { rotate: "4deg" }, { rotate: "0deg" }], { duration: 250 });
+    await animateCourtPiece(flightBall, [
+      { ...position(targetX, targetY), easing: "ease-out" },
+      { ...position(targetX - 26 * scale, targetY - 22 * scale), offset: .38, easing: "ease-in" },
+      { ...position(targetX - 60 * scale, targetY + 48 * scale), opacity: 0 },
+    ], { duration: 410, fill: "forwards" }).finished;
+  } else {
+    animateCourtPiece(scoringNet, [{ scale: "1" }, { scale: ".77 1.45" }, { scale: "1" }], { duration: 260 });
+    await animateCourtPiece(flightBall, [position(basketX, basketY), { ...position(basketX, basketY + 22 * scale), opacity: 0 }], {
+      duration: 180, easing: "ease-in", fill: "forwards",
+    }).finished;
+  }
   flightBall.hidden = true;
 }

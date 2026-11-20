@@ -252,7 +252,7 @@ function setTimer(value) {
 
 function clearPlayState() {
   resetCourtShot();
-  document.body.classList.remove("is-shooting", "shot-made", "is-miss");
+  document.body.classList.remove("is-shooting", "shot-made", "shot-missed", "is-miss");
   $("#play-call").textContent = "";
 }
 
@@ -277,16 +277,16 @@ function startClock() {
   setTimer(QUESTION_SECONDS);
   timerId = setInterval(() => {
     setTimer(secondsLeft - 1);
-    if (secondsLeft <= 0) resolveQuestion(null, "The shot clock expired. 0 points.");
+    if (secondsLeft <= 0) resolveQuestion(null, { timedOut: true });
   }, 1000);
 }
 
 function showQuestion() {
+  clearPlayState();
   if (questionIndex >= RUN_LENGTH) {
     finishRun();
     return;
   }
-  clearPlayState();
   const question = runQuestions[questionIndex];
   questionNumberElement.textContent = String(questionIndex + 1).padStart(2, "0");
   $("#period").textContent = `Q${questionIndex + 1} · 30 SEC`;
@@ -298,7 +298,7 @@ function showQuestion() {
   startClock();
 }
 
-async function resolveQuestion(match, missMessage = "") {
+async function resolveQuestion(match, { timedOut = false } = {}) {
   if (locked) return;
   clearInterval(timerId);
   setFormEnabled(false);
@@ -313,11 +313,16 @@ async function resolveQuestion(match, missMessage = "") {
     const correctedText = match.corrected ? `Spelling fixed to ${match.name}.` : `${match.name} is in the answer bank.`;
     setResult(`${correctedText} ${tier.rarity} · ${tier.label}`, `+${tier.points} pts`, "is-good");
     if (match.corrected) resultStrip.classList.add("is-corrected");
+  } else if (timedOut) {
+    document.body.classList.add("is-shooting");
+    await playCourtShot("jumpshot", { miss: true });
+    document.body.classList.add("shot-missed");
+    $("#play-call").textContent = "BRICK";
+    setResult("The shot clock expired.", "0 pts", "is-miss");
   } else {
     clearPlayState();
     document.body.classList.add("is-miss");
-    const message = missMessage || "No match in the answer bank. 0 points.";
-    setResult(message, "0", "is-miss");
+    setResult("No match in the answer bank. 0 points.", "0", "is-miss");
   }
 
   questionIndex += 1;
