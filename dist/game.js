@@ -252,7 +252,7 @@ function setTimer(value) {
 
 function clearPlayState() {
   resetCourtShot();
-  document.body.classList.remove("is-shooting", "shot-made", "shot-missed", "is-miss");
+  document.body.classList.remove("is-shooting", "shot-made", "shot-missed");
   $("#play-call").textContent = "";
 }
 
@@ -277,7 +277,7 @@ function startClock() {
   setTimer(QUESTION_SECONDS);
   timerId = setInterval(() => {
     setTimer(secondsLeft - 1);
-    if (secondsLeft <= 0) resolveQuestion(null, { timedOut: true });
+    if (secondsLeft <= 0) resolveQuestion(null);
   }, 1000);
 }
 
@@ -298,13 +298,14 @@ function showQuestion() {
   startClock();
 }
 
-async function resolveQuestion(match, { timedOut = false } = {}) {
+async function resolveQuestion(match) {
   if (locked) return;
   clearInterval(timerId);
   setFormEnabled(false);
+  setResult();
+  document.body.classList.add("is-shooting");
   if (match) {
     const tier = TIERS[match.tier];
-    document.body.classList.add("is-shooting");
     await playCourtShot(match.tier);
     score += tier.points;
     scoreElement.textContent = formatScore(score);
@@ -313,16 +314,11 @@ async function resolveQuestion(match, { timedOut = false } = {}) {
     const correctedText = match.corrected ? `Spelling fixed to ${match.name}.` : `${match.name} is in the answer bank.`;
     setResult(`${correctedText} ${tier.rarity} · ${tier.label}`, `+${tier.points} pts`, "is-good");
     if (match.corrected) resultStrip.classList.add("is-corrected");
-  } else if (timedOut) {
-    document.body.classList.add("is-shooting");
+  } else {
     await playCourtShot("jumpshot", { miss: true });
     document.body.classList.add("shot-missed");
     $("#play-call").textContent = "BRICK";
     setResult("The shot clock expired.", "0 pts", "is-miss");
-  } else {
-    clearPlayState();
-    document.body.classList.add("is-miss");
-    setResult("No match in the answer bank. 0 points.", "0", "is-miss");
   }
 
   questionIndex += 1;
@@ -366,7 +362,7 @@ function startRun() {
   $("#red-score").textContent = "00";
   finishCard.classList.add("hidden");
   introCard.classList.add("hidden");
-  document.body.classList.remove("is-finished", "is-miss");
+  document.body.classList.remove("is-finished");
   document.body.classList.add("is-playing");
   showQuestion();
 }
@@ -375,6 +371,12 @@ form.addEventListener("submit", (event) => {
   event.preventDefault();
   if (locked) return;
   const match = matchAnswer(runQuestions[questionIndex], answerInput.value);
+  if (!match) {
+    setResult("Answer not recognized. Try again.", "", "is-miss");
+    answerInput.focus({ preventScroll: true });
+    answerInput.select();
+    return;
+  }
   resolveQuestion(match);
 });
 

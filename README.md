@@ -1,6 +1,6 @@
 # Jumpshot
 
-A responsive, single-player NBA trivia arcade game. Each run draws seven questions from a curated bank. Players get 30 seconds and one final answer per question; accepted answers score 10, 50, 100, or 200 points based on their assigned tier.
+A responsive, single-player NBA trivia arcade game. Each run draws seven questions from a curated bank. Players can retry until an answer is accepted or the 30-second clock expires. Accepted answers score 10, 50, 100, or 200 points based on their assigned tier.
 
 ## Play locally
 

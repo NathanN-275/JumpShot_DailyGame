@@ -175,10 +175,8 @@ body.is-playing .court-sprite.blue-one { animation: idle-bounce 1.3s steps(2, en
 body.is-shooting .court-sprite.blue-one { animation: none; z-index: 8; }
 body.shot-made .play-call { animation: callout 1.1s ease both; }
 body.shot-missed .play-call { animation: callout 1.5s ease both; color: #ff9a8f; text-shadow: 2px 2px #631f26; }
-body.is-miss .blue-one { animation: miss-wilt .55s ease both; }
 @keyframes idle-bounce { 50% { translate: 0 -3px; } }
 @keyframes callout { 0% { opacity: 0; transform: translate(-50%, 12px) scale(.7); } 20%, 75% { opacity: 1; transform: translate(-50%, 0) scale(1); } 100% { opacity: 0; transform: translate(-50%, -9px) scale(1.05); } }
-@keyframes miss-wilt { 30% { rotate: -10deg; translate: 0 7px; } 100% { rotate: 0; translate: 0 0; } }
 
 @media (min-height: 850px) and (min-width: 900px) { .app-shell { gap: 17px; } .arena { min-height: 0; } .court { height: auto; } }
 @media (max-width: 850px) {
