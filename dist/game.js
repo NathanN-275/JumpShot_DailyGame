@@ -172,8 +172,11 @@ const resultPoints = $("#result-points");
 const introCard = $("#intro-card");
 const finishCard = $("#finish-card");
 const bestScoreElement = $("#best-score");
+const resultsPanel = $("#results-panel");
+const resultsList = $("#results-list");
 
 let runQuestions = [];
+let runAnswers = [];
 let questionIndex = 0;
 let score = 0;
 let redScore = 0;
@@ -217,7 +220,7 @@ function readDaily(day) {
 }
 
 function saveDaily(nextIndex, nextDeadline) {
-  const saved = { day: gameDay, index: nextIndex, deadline: nextDeadline, score, redScore, prompts: runQuestions.map(({ prompt }) => prompt) };
+  const saved = { day: gameDay, index: nextIndex, deadline: nextDeadline, score, redScore, prompts: runQuestions.map(({ prompt }) => prompt), answers: runAnswers };
   lastDailySave = saved;
   try { localStorage.setItem(DAILY_KEY + gameDay, JSON.stringify(saved)); } catch { /* Storage can be disabled in a private window. */ }
 }
@@ -407,6 +410,7 @@ async function resolveQuestion(match) {
   const finish = !tier && Math.random() >= .5 ? RED_FINISHES[Math.floor(Math.random() * RED_FINISHES.length)] : null;
   if (tier) score += tier.points;
   if (finish) redScore += finish.points;
+  runAnswers[questionIndex] = match?.name ?? null;
   saveDaily(questionIndex + 1, null);
   if (match) {
     await playCourtShot(match.tier);
@@ -447,6 +451,104 @@ function finishRun() {
   $("#period").textContent = "FINAL";
   setTimer(0);
   setResult(`Final score: ${formatScore(score)} points. Best: ${formatScore(best)}.`, "FINAL", "is-good");
+  renderRunResults();
+}
+
+function renderRunResults() {
+  resultsList.replaceChildren();
+  const rarities = ["All", ...Object.values(TIERS).map(({ rarity }) => rarity)];
+
+  runQuestions.forEach((question, index) => {
+    const entries = [...new Map(question.answers.map(([name, tier, aliases = []]) => [name, { name, tier, aliases }])).values()]
+      .sort((left, right) => left.name.localeCompare(right.name));
+    const details = document.createElement("details");
+    details.className = "answer-review";
+
+    const summary = document.createElement("summary");
+    const prompt = document.createElement("span");
+    prompt.className = "review-prompt";
+    prompt.textContent = `${String(index + 1).padStart(2, "0")} · ${question.prompt}`;
+    const accepted = document.createElement("span");
+    const answer = runAnswers[index];
+    accepted.className = answer === null ? "review-answer is-unanswered" : answer === false ? "review-answer is-unavailable" : "review-answer";
+    accepted.textContent = typeof answer === "string" ? `YOUR ANSWER · ${answer}` : answer === null ? "NO ANSWER" : "ANSWER NOT RECORDED";
+    summary.append(prompt, accepted);
+    details.append(summary);
+
+    const browser = document.createElement("div");
+    browser.className = "answer-browser";
+    const filters = document.createElement("div");
+    filters.className = "rarity-filters";
+    filters.setAttribute("role", "group");
+    filters.setAttribute("aria-label", `Filter answers for question ${index + 1}`);
+    const searchLabel = document.createElement("label");
+    searchLabel.className = "sr-only";
+    searchLabel.textContent = `Search answers for question ${index + 1}`;
+    const search = document.createElement("input");
+    search.type = "search";
+    search.className = "answer-search";
+    search.placeholder = "Search answers…";
+    search.autocomplete = "off";
+    searchLabel.append(search);
+    const answerList = document.createElement("ul");
+    answerList.className = "answer-results";
+    answerList.setAttribute("aria-live", "polite");
+    const listStatus = document.createElement("p");
+    listStatus.className = "answer-list-status";
+    let activeRarity = "All";
+
+    const renderAnswers = () => {
+      const query = answerKey(search.value);
+      const matches = entries.filter(({ name, tier, aliases }) => {
+        const rarity = TIERS[tier].rarity;
+        if (activeRarity !== "All" && rarity !== activeRarity) return false;
+        if (!query) return true;
+        const sharedAliases = question.team ? [] : aliasesByPlayer.get(letterKey(name)) ?? [];
+        return [name, ...aliases, ...sharedAliases].some((candidate) => answerKey(candidate).includes(query));
+      });
+      answerList.replaceChildren();
+      for (const entry of matches) {
+        const row = document.createElement("li");
+        const name = document.createElement("span");
+        name.textContent = entry.name;
+        const tier = document.createElement("span");
+        tier.className = "answer-rarity";
+        const scoringTier = TIERS[entry.tier];
+        tier.textContent = `${scoringTier.rarity} · ${scoringTier.points} pts`;
+        row.append(name, tier);
+        answerList.append(row);
+      }
+      listStatus.textContent = matches.length ? `${matches.length.toLocaleString()} answers` : "No matching answers.";
+    };
+
+    for (const rarity of rarities) {
+      const count = rarity === "All" ? entries.length : entries.filter(({ tier }) => TIERS[tier].rarity === rarity).length;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "rarity-filter";
+      button.setAttribute("aria-pressed", String(rarity === activeRarity));
+      button.textContent = `${rarity} ${count.toLocaleString()}`;
+      button.addEventListener("click", () => {
+        activeRarity = rarity;
+        for (const filter of filters.children) filter.setAttribute("aria-pressed", String(filter === button));
+        renderAnswers();
+      });
+      filters.append(button);
+    }
+    search.addEventListener("input", renderAnswers);
+    browser.append(filters, searchLabel, answerList, listStatus);
+    details.append(browser);
+    details.addEventListener("toggle", () => {
+      if (!details.open) return;
+      for (const other of resultsList.querySelectorAll(".answer-review[open]")) {
+        if (other !== details) other.open = false;
+      }
+      renderAnswers();
+    });
+    resultsList.append(details);
+  });
+
+  resultsPanel.classList.remove("hidden");
 }
 
 function dailyShuffle(day) {
@@ -520,6 +622,9 @@ function startRun(day) {
   const saved = readDaily(gameDay);
   const savedQuestions = saved?.prompts?.map((prompt) => questionsByPrompt.get(prompt));
   runQuestions = savedQuestions?.length === RUN_LENGTH && savedQuestions.every(Boolean) ? savedQuestions : dailyQuestions(gameDay);
+  runAnswers = Array.isArray(saved?.answers) && saved.answers.length === RUN_LENGTH
+    ? saved.answers.map((answer) => typeof answer === "string" ? answer : answer === false ? false : null)
+    : Array(RUN_LENGTH).fill(saved?.index > 0 ? false : null);
   questionIndex = saved?.index ?? 0;
   score = saved?.score ?? 0;
   redScore = saved?.redScore ?? 0;
@@ -536,13 +641,12 @@ function showDailyHome() {
   homeDay = dailyDate();
   const saved = readDaily(homeDay);
   if (saved?.index >= RUN_LENGTH) {
-    score = saved.score;
-    redScore = saved.redScore;
-    finishRun();
+    startRun(homeDay);
     return;
   }
 
   document.body.classList.remove("is-finished");
+  resultsPanel.classList.add("hidden");
   finishCard.classList.add("hidden");
   introCard.classList.remove("hidden");
   scoreElement.textContent = "000";
