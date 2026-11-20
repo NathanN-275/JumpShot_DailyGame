@@ -138,9 +138,9 @@ button { color: inherit; }
 .timer strong { color: var(--ink); font: 11px var(--pixel); }
 .timer.is-low strong { color: #ff8173; }
 .timer.is-low .timer-progress { stroke: #ff7163; }
-.question-content { min-height: 126px; display: grid; grid-template-columns: minmax(250px, .9fr) minmax(330px, 1.1fr); align-items: center; gap: 24px; padding: 18px 24px 12px; }
+.question-content { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 18px 24px 12px; }
 .prompt-kicker { color: var(--yellow); font: 7px var(--pixel); letter-spacing: .3px; }
-.prompt-copy h2 { max-width: 640px; margin: 7px 0 5px; font-size: clamp(18px, 2vw, 25px); line-height: 1.15; letter-spacing: -.6px; }
+.prompt-copy h2 { margin: 7px 0 5px; font-size: clamp(18px, 2vw, 25px); line-height: 1.15; letter-spacing: -.6px; }
 .prompt-copy p { margin: 0; color: #97a7b9; font-size: 12px; }
 .answer-entry { display: flex; height: 48px; border: 1px solid #4b5b72; border-radius: 5px; overflow: hidden; background: #0f1826; box-shadow: inset 0 1px 5px #060a10aa; }
 .entry-icon { width: 43px; flex: 0 0 43px; display: grid; place-items: center; color: #8494a9; font-size: 24px; }
@@ -195,7 +195,7 @@ body.is-playing #answer:not(:disabled) { background: transparent; }
 @media (max-width: 850px) {
   .app-shell { padding: 14px 16px 12px; }
   .topbar { grid-template-columns: 1fr minmax(370px, 1.6fr) auto; gap: 10px; }
-  .question-content { grid-template-columns: 1fr; gap: 14px; padding: 16px 18px 12px; }
+  .question-content { padding: 16px 18px 12px; }
   .play-meta { grid-template-columns: 94px 1fr 82px; padding-inline: 12px; }
   .tier-legend { gap: 8px 12px; }
   .tier-legend span { font-size: 6px; }
@@ -263,7 +263,7 @@ body.is-playing #answer:not(:disabled) { background: transparent; }
   .timer { width: 30px; height: 30px; margin: auto; }
   .timer svg { width: 30px; height: 30px; }
   .timer strong { font-size: 9px; }
-  .question-content { min-height: 0; padding: 9px 12px 8px; gap: 8px; }
+  .question-content { padding: 9px 12px 8px; gap: 8px; }
   .prompt-kicker { font-size: 6px; }
   .prompt-copy h2 { margin: 5px 0 3px; font-size: 15px; line-height: 1.12; }
   .prompt-copy p { font-size: 11px; }
@@ -283,6 +283,6 @@ body.is-playing #answer:not(:disabled) { background: transparent; }
   .arena { min-height: 520px; }
   .court { height: auto; min-height: 340px; }
   .stands { height: 50px; flex-basis: 50px; }
-  .question-content { min-height: 110px; padding-block: 12px 8px; }
+  .question-content { padding-block: 12px 8px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; } }
