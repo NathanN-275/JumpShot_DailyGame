@@ -154,7 +154,129 @@ const firstRotationNames = [...NAME_QUESTIONS, ...MORE_NAME_QUESTIONS];
 const firstRotationHistory = [...originalHistoryQuestions, ...MORE_HISTORY_QUESTIONS];
 const allNameQuestions = [...firstRotationNames, ...NEW_NAME_QUESTIONS];
 const allHistoryQuestions = [...firstRotationHistory, ...NEW_HISTORY_QUESTIONS];
+const legacyQuestionPrompts = new Map();
+
+function renameQuestionPrompt(question, prompt) {
+  legacyQuestionPrompts.set(question.prompt, question);
+  question.prompt = prompt;
+}
+
+function mergeAnswerBanks(question, ...sources) {
+  const answers = new Map(question.answers.map(([name, tier, aliases = []]) => [name, [name, tier, [...aliases]]]));
+  for (const source of sources) {
+    for (const [name, tier, aliases = []] of source.answers) {
+      if (answers.has(name)) {
+        const [savedName, savedTier, savedAliases] = answers.get(name);
+        answers.set(name, [savedName, savedTier, [...new Set([...savedAliases, ...aliases])]]);
+      } else {
+        answers.set(name, [name, tier, [...aliases]]);
+      }
+    }
+  }
+  question.answers = [...answers.values()];
+}
+
+function widenDateRangeQuestions(questions) {
+  const groups = new Map();
+  for (const question of new Set(questions)) {
+    const range = question.prompt.match(/\bfrom (\d{4}) through (\d{4})\b/);
+    if (!range) continue;
+    const key = `${question.category}:${question.prompt.slice(0, range.index)}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push({ question, range, start: Number(range[1]), end: Number(range[2]) });
+  }
+
+  for (const group of groups.values()) {
+    group.sort((left, right) => left.start - right.start);
+    const plans = group.map((item, index) => {
+      let sources = [item];
+      if (item.end - item.start + 1 < 20) {
+        const next = group[index + 1];
+        const previous = group[index - 1];
+        if (next && item.end + 1 === next.start) sources.push(next);
+        else if (previous && previous.end + 1 === item.start) sources.unshift(previous);
+      }
+      return {
+        ...item,
+        item,
+        originalStart: item.start,
+        originalEnd: item.end,
+        sources,
+        start: Math.min(...sources.map(({ start }) => start)),
+        end: Math.max(...sources.map(({ end }) => end)),
+      };
+    });
+    const usedRanges = new Set();
+
+    for (const plan of plans) {
+      let rangeKey = `${plan.start}:${plan.end}`;
+      while (usedRanges.has(rangeKey)) {
+        const previous = group.find((item) => item.end + 1 === plan.start && !plan.sources.includes(item));
+        if (!previous) break;
+        plan.sources.unshift(previous);
+        plan.start = previous.start;
+        rangeKey = `${plan.start}:${plan.end}`;
+      }
+      if (usedRanges.has(rangeKey)) {
+        // Avoid duplicate date prompts when the last short window already overlaps its predecessor.
+        plan.start = plan.originalStart;
+        plan.end = plan.originalEnd;
+        plan.sources = [plan.item];
+        rangeKey = `${plan.start}:${plan.end}`;
+      }
+      usedRanges.add(rangeKey);
+      const additions = plan.sources.filter(({ question }) => question !== plan.question).map(({ question }) => question);
+      mergeAnswerBanks(plan.question, ...additions);
+      if (plan.start !== plan.originalStart || plan.end !== plan.originalEnd) {
+        renameQuestionPrompt(plan.question, plan.question.prompt.replace(plan.range[0], `from ${plan.start} through ${plan.end}`));
+      }
+    }
+  }
+}
+
+function widenBaaChampionshipRange(questions) {
+  const baa = questions.find(({ prompt }) => prompt.includes("BAA championship from 1947 through 1949"));
+  const nbaFifties = questions.find(({ prompt }) => prompt.includes("NBA team that won a championship from 1950 through 1959"));
+  if (!baa || !nbaFifties) return;
+  mergeAnswerBanks(baa, nbaFifties);
+  renameQuestionPrompt(baa, baa.prompt.replace("BAA championship from 1947 through 1949", "BAA/NBA championship from 1947 through 1959"));
+}
+
+widenBaaChampionshipRange(allHistoryQuestions);
+widenDateRangeQuestions(allHistoryQuestions);
+
+const skillsChallenge2010s = allHistoryQuestions.find(({ prompt, category }) => category === "skills-challenge" && prompt.includes("2010 through 2019"));
+const skillsChallengeEarlier = allHistoryQuestions.find(({ prompt, category }) => category === "skills-challenge" && prompt.includes("2003 through 2019"));
+if (skillsChallenge2010s && skillsChallengeEarlier) {
+  mergeAnswerBanks(skillsChallenge2010s, skillsChallengeEarlier);
+  renameQuestionPrompt(skillsChallenge2010s, skillsChallenge2010s.prompt.replace("from 2010 through 2019", "from 2000 through 2019"));
+}
+
+const finalsLosses2020s = allHistoryQuestions.find(({ prompt }) => prompt.includes("lost in the Finals from 2020 through 2026"));
+const finalsLosses2010s = allHistoryQuestions.find(({ prompt }) => prompt.includes("lost in the Finals from 2010 through 2019"));
+if (finalsLosses2020s && finalsLosses2010s) {
+  mergeAnswerBanks(finalsLosses2020s, finalsLosses2010s, {
+    answers: [
+      ["Los Angeles Lakers", "dunk", TEAM_ALIASES["Los Angeles Lakers"]],
+      ["New Jersey Nets", "dunk", TEAM_ALIASES["New Jersey Nets"]],
+      ["Indiana Pacers", "jumpshot", TEAM_ALIASES["Indiana Pacers"]],
+      ["Philadelphia 76ers", "jumpshot", TEAM_ALIASES["Philadelphia 76ers"]],
+      ["Detroit Pistons", "jumpshot", TEAM_ALIASES["Detroit Pistons"]],
+      ["Orlando Magic", "jumpshot", TEAM_ALIASES["Orlando Magic"]],
+      ["Dallas Mavericks", "three", TEAM_ALIASES["Dallas Mavericks"]],
+      ["Cleveland Cavaliers", "three", TEAM_ALIASES["Cleveland Cavaliers"]],
+    ],
+  });
+  renameQuestionPrompt(finalsLosses2020s, finalsLosses2020s.prompt.replace("from 2020 through 2026", "from 2000 through 2026"));
+}
+
+for (const question of allHistoryQuestions.filter(({ category }) => category === "nba-cup")) {
+  renameQuestionPrompt(question, question.prompt.replace(/ from 2023 through 2025/, " since 2023"));
+  question.hint = "The NBA Cup began in 2023.";
+}
+
 const questionsByPrompt = new Map([...allNameQuestions, ...allHistoryQuestions].map((question) => [question.prompt, question]));
+for (const [prompt, question] of legacyQuestionPrompts) questionsByPrompt.set(prompt, question);
 
 const $ = (selector) => document.querySelector(selector);
 const form = $("#answer-form");
@@ -462,7 +584,7 @@ function renderRunResults() {
 
   runQuestions.forEach((question, index) => {
     const entries = [...new Map(question.answers.map(([name, tier, aliases = []]) => [name, { name, tier, aliases }])).values()]
-      .sort((left, right) => left.name.localeCompare(right.name));
+      .sort((left, right) => tierKeys.indexOf(left.tier) - tierKeys.indexOf(right.tier) || left.name.localeCompare(right.name));
     const details = document.createElement("details");
     details.className = "answer-review";
 

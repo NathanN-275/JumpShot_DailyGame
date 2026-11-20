@@ -133,6 +133,7 @@ const TEAM_ALIASES = {
   "New York Knicks": ["Knicks"],
   "Atlanta Hawks": ["Hawks"],
   "Brooklyn Nets": ["Nets"],
+  "New Jersey Nets": ["Nets"],
   "Charlotte Hornets": ["Hornets"],
   "Indiana Pacers": ["Pacers"],
   "Los Angeles Clippers": ["Clippers", "LA Clippers"],
