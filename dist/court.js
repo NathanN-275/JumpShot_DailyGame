@@ -5,6 +5,18 @@ const SHOT_MOTION = {
   half: { x: .48, y: .64, approach: 650, jump: 330, flight: 880, lift: 20, arc: .31 },
 };
 
+const RED_FINISHES = [
+  { label: "LAYUP", points: 2, flight: 280, arc: .05 },
+  { label: "PULL-UP", points: 2, x: .24, y: .56, flight: 460, arc: .13 },
+  { label: "THREE POINTER", points: 3, x: .39, y: .55, flight: 650, arc: .22 },
+];
+
+const BLUE_SPACING = {
+  jumpshot: { player: ".blue-two", x: .73, y: .15 },
+  three: { player: ".blue-four", x: .73, y: .78 },
+  half: { player: ".blue-two", x: .63, y: .24 },
+};
+
 const court = document.querySelector(".court");
 const shooter = court.querySelector(".blue-one");
 const shootingArm = shooter.querySelector(".sprite-arm");
@@ -13,9 +25,11 @@ const heldBall = shooter.querySelector(".sprite-ball");
 const flightBall = court.querySelector(".shot-ball");
 const scoringRim = court.querySelector(".court-end-right .rim");
 const scoringNet = scoringRim.querySelector(".net");
-const redRunner = court.querySelector(".red-five");
+const redRunner = court.querySelector(".red-one");
+const redRebounder = court.querySelector(".red-five");
 const redWing = court.querySelector(".red-four");
 const redRim = court.querySelector(".court-end-left .rim");
+const crowdSections = document.querySelectorAll(".crowd");
 const shotAnimations = [];
 
 function resetCourtShot() {
@@ -30,25 +44,99 @@ function animateCourtPiece(element, frames, options) {
   return animation;
 }
 
+function courtSpace() {
+  const view = court.getBoundingClientRect();
+  return {
+    width: view.width,
+    height: view.height,
+    center(element) {
+      const rect = element.getBoundingClientRect();
+      return { x: rect.left + rect.width / 2 - view.left, y: rect.top + rect.height / 2 - view.top };
+    },
+    position(x, y) {
+      return { left: `${x / view.width * 100}%`, top: `${y / view.height * 100}%` };
+    },
+  };
+}
+
+function shotArc(position, from, to, height) {
+  return Array.from({ length: 17 }, (_, index) => {
+    const t = index / 16;
+    const x = from.x + (to.x - from.x) * t;
+    const y = from.y + (to.y - from.y) * t - 4 * height * t * (1 - t);
+    return position(x, y);
+  });
+}
+
+function canAnimateCourt() {
+  return Boolean(shooter.animate) && !matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function cheerCrowd() {
+  const frames = ["0%", "50%", "100%", "50%", "0%"].map((backgroundPositionY) => ({
+    backgroundPositionY, easing: "steps(1, end)",
+  }));
+  crowdSections.forEach((section, index) => {
+    animateCourtPiece(section, frames, { duration: 840, delay: index * 95 });
+  });
+}
+
+function swingLegs(player, duration) {
+  animateCourtPiece(player.querySelector(".sprite-legs"), [{ rotate: "-20deg" }, { rotate: "20deg" }, { rotate: "-20deg" }], {
+    duration: 180, iterations: duration / 180,
+  });
+}
+
+function movePlayer(player, space, x, y, duration) {
+  const start = space.center(player);
+  swingLegs(player, duration);
+  return animateCourtPiece(player, [space.position(start.x, start.y), space.position(x, y)], {
+    duration, easing: "ease-out", fill: "forwards",
+  });
+}
+
+function reactToBlueShot(tier, space, plantX, plantY, motion) {
+  if (tier === "dunk") {
+    movePlayer(court.querySelector(".blue-five"), space, space.width * .87, space.height * .74, 490);
+    movePlayer(redRebounder, space, space.width * .91, space.height * .31, 550);
+    return;
+  }
+
+  // Lift a wing to make room for the drive or give the ball handler an outlet.
+  const spacing = BLUE_SPACING[tier];
+  movePlayer(court.querySelector(spacing.player), space, space.width * spacing.x, space.height * spacing.y, motion.approach + 150);
+
+  const gap = Math.max(25, space.width * .026);
+  movePlayer(redRunner, space, plantX + gap, plantY - 8, motion.approach + 55);
+  animateCourtPiece(redRunner, [{ translate: "0 0" }, { translate: "0 -15px" }, { translate: "0 0" }], {
+    delay: motion.approach + 55, duration: motion.jump + 155, easing: "ease-out",
+  });
+  animateCourtPiece(redRunner.querySelector(".sprite-arm"), [{ rotate: "0deg" }, { rotate: "-115deg" }, { rotate: "0deg" }], {
+    delay: motion.approach, duration: motion.jump + 275,
+  });
+}
+
 async function playCourtShot(tier, { miss = false } = {}) {
-  if (matchMedia("(prefers-reduced-motion: reduce)").matches || !shooter.animate) return;
+  if (!canAnimateCourt()) return;
 
   const motion = SHOT_MOTION[tier];
-  const view = court.getBoundingClientRect();
+  const space = courtSpace();
   const player = shooter.getBoundingClientRect();
   const rim = scoringRim.getBoundingClientRect();
   const scale = player.height / shooter.offsetHeight;
-  const basketX = rim.left + rim.width / 2 - view.left;
-  const basketY = rim.top + rim.height / 2 - view.top;
+  const { x: basketX, y: basketY } = space.center(scoringRim);
   const dunk = tier === "dunk";
-  const plantX = dunk ? basketX - 29 * scale : view.width * motion.x;
-  const plantY = dunk ? basketY + 54 * scale : view.height * motion.y;
+  const plantX = dunk ? basketX - 29 * scale : space.width * motion.x;
+  const plantY = dunk ? basketY + 54 * scale : space.height * motion.y;
   const jumpX = plantX + (dunk ? 9 * scale : 0);
   const jumpY = plantY - motion.lift * scale;
-  const position = (x, y) => ({ left: `${x / view.width * 100}%`, top: `${y / view.height * 100}%` });
+  const { position } = space;
   const plant = position(plantX, plantY);
   const peak = position(jumpX, jumpY);
-  const start = position(player.left + player.width / 2 - view.left, player.top + player.height / 2 - view.top);
+  const origin = space.center(shooter);
+  const start = position(origin.x, origin.y);
+
+  reactToBlueShot(tier, space, plantX, plantY, motion);
 
   animateCourtPiece(shootingLegs, [{ rotate: "-20deg" }, { rotate: "20deg" }, { rotate: "-20deg" }], {
     duration: 200, iterations: motion.approach / 200,
@@ -70,9 +158,7 @@ async function playCourtShot(tier, { miss = false } = {}) {
     duration: motion.jump, easing: "ease-out", fill: "forwards",
   }).finished;
 
-  const launch = heldBall.getBoundingClientRect();
-  const launchX = launch.left + launch.width / 2 - view.left;
-  const launchY = launch.top + launch.height / 2 - view.top;
+  const launch = space.center(heldBall);
   animateCourtPiece(heldBall, [{ opacity: 0 }], { duration: 1, fill: "forwards" });
   animateCourtPiece(shooter, [peak, position(jumpX, plantY)], { duration: 290, easing: "ease-in", fill: "forwards" });
   animateCourtPiece(shootingArm, [{ rotate: dunk ? "-146deg" : "-161deg" }, { rotate: "-16deg" }], {
@@ -81,22 +167,21 @@ async function playCourtShot(tier, { miss = false } = {}) {
 
   const targetX = miss ? basketX - rim.width / 2 : basketX;
   const targetY = miss ? basketY - 4 * scale : basketY;
-  const arcHeight = Math.min(launchY, targetY) * motion.arc * 2;
-  const flight = Array.from({ length: 17 }, (_, index) => {
-    const t = index / 16;
-    const x = launchX + (targetX - launchX) * t;
-    const y = launchY + (targetY - launchY) * t - 4 * arcHeight * t * (1 - t);
-    return position(x, y);
-  });
+  const arcHeight = Math.min(launch.y, targetY) * motion.arc * 2;
+  const flight = shotArc(position, launch, { x: targetX, y: targetY }, arcHeight);
 
   flightBall.hidden = false;
+  cheerCrowd();
   await animateCourtPiece(flightBall, flight, { duration: motion.flight, fill: "forwards" }).finished;
   if (miss) {
+    const reboundX = targetX - 60 * scale;
+    const reboundY = targetY + 48 * scale;
     animateCourtPiece(scoringRim, [{ rotate: "0deg" }, { rotate: "-7deg" }, { rotate: "4deg" }, { rotate: "0deg" }], { duration: 250 });
+    movePlayer(redRebounder, space, reboundX + 18 * scale, reboundY - 8 * scale, 410);
     await animateCourtPiece(flightBall, [
       { ...position(targetX, targetY), easing: "ease-out" },
       { ...position(targetX - 26 * scale, targetY - 22 * scale), offset: .38, easing: "ease-in" },
-      position(targetX - 60 * scale, targetY + 48 * scale),
+      position(reboundX, reboundY),
     ], { duration: 410, fill: "forwards" }).finished;
     return;
   }
@@ -107,28 +192,27 @@ async function playCourtShot(tier, { miss = false } = {}) {
   flightBall.hidden = true;
 }
 
-async function playRedFastBreak() {
-  if (flightBall.hidden) return;
+async function playRedFastBreak(finish) {
+  if (!canAnimateCourt()) return;
 
-  const view = court.getBoundingClientRect();
-  const center = (element) => {
-    const rect = element.getBoundingClientRect();
-    return { x: rect.left + rect.width / 2 - view.left, y: rect.top + rect.height / 2 - view.top };
-  };
-  const position = (x, y) => ({ left: `${x / view.width * 100}%`, top: `${y / view.height * 100}%` });
+  const space = courtSpace();
+  const { position, center } = space;
   const scale = redRunner.getBoundingClientRect().height / redRunner.offsetHeight;
-  const runnerStart = center(redRunner);
-  const rebound = center(flightBall);
+  const steal = center(heldBall);
   const basket = center(redRim);
   const handOffset = 18 * scale;
-  const pickup = { x: rebound.x + handOffset, y: rebound.y - 8 * scale };
-  const drive = { x: basket.x + 34 * scale, y: basket.y + 48 * scale };
-  const jump = { x: basket.x + 20 * scale, y: basket.y + 12 * scale };
+  const pickup = { x: steal.x + handOffset, y: steal.y - 8 * scale };
+  const layup = finish.x === undefined;
+  const drive = layup
+    ? { x: basket.x + 34 * scale, y: basket.y + 48 * scale }
+    : { x: space.width * finish.x, y: space.height * finish.y };
+  const jump = { x: drive.x - (layup ? 14 * scale : 0), y: drive.y - 30 * scale };
   const runnerAt = ({ x, y }) => position(x, y);
 
-  await animateCourtPiece(redRunner, [runnerAt(runnerStart), runnerAt(pickup)], {
-    duration: 200, easing: "ease-out", fill: "forwards",
-  }).finished;
+  animateCourtPiece(redRunner.querySelector(".sprite-arm"), [{ rotate: "0deg" }, { rotate: "-45deg" }, { rotate: "0deg" }], { duration: 390 });
+  await movePlayer(redRunner, space, pickup.x, pickup.y, 310).finished;
+  animateCourtPiece(heldBall, [{ opacity: 0 }], { duration: 1, fill: "forwards" });
+  flightBall.hidden = false;
 
   const duration = 1160;
   const sprintPath = Array.from({ length: 25 }, (_, i) => {
@@ -139,29 +223,29 @@ async function playRedFastBreak() {
     };
   });
   const dribbles = sprintPath.map(({ x, y }, i) => position(x - handOffset, y + (8 + 15 * Math.abs(Math.sin(i * Math.PI / 4))) * scale));
-  const wingStart = center(redWing);
-  animateCourtPiece(redWing, [runnerAt(wingStart), position(view.width * .28, view.height * .67)], {
-    duration, fill: "forwards",
-  });
-  for (const player of [redRunner, redWing]) {
-    animateCourtPiece(player.querySelector(".sprite-legs"), [{ rotate: "-20deg" }, { rotate: "20deg" }, { rotate: "-20deg" }], {
-      duration: 180, iterations: duration / 180,
-    });
-  }
+  movePlayer(redWing, space, space.width * .28, space.height * .69, duration);
+  movePlayer(court.querySelector(".blue-four"), space, space.width * .45, space.height * .68, duration + 100);
+  swingLegs(redRunner, duration);
   animateCourtPiece(redRunner, sprintPath.map(runnerAt), { duration, fill: "forwards" });
   await animateCourtPiece(flightBall, dribbles, { duration, fill: "forwards" }).finished;
 
   animateCourtPiece(redRunner, [runnerAt(drive), { ...runnerAt(jump), offset: .45 }, runnerAt(drive)], {
     duration: 500, fill: "forwards",
   });
+  animateCourtPiece(redRunner.querySelector(".sprite-arm"), [{ rotate: "0deg" }, { rotate: "-108deg" }, { rotate: "0deg" }], {
+    duration: 500,
+  });
+  const release = { x: jump.x - handOffset, y: jump.y - 15 * scale };
+  await animateCourtPiece(flightBall, [dribbles.at(-1), runnerAt(release)], { duration: 225, fill: "forwards" }).finished;
+  const arcHeight = Math.min(release.y, basket.y) * finish.arc * 2;
+  cheerCrowd();
+  await animateCourtPiece(flightBall, shotArc(position, release, basket, arcHeight), { duration: finish.flight, fill: "forwards" }).finished;
   animateCourtPiece(redRim.querySelector(".net"), [{ scale: "1" }, { scale: ".77 1.45" }, { scale: "1" }], {
-    delay: 360, duration: 260,
+    duration: 260,
   });
   await animateCourtPiece(flightBall, [
-    dribbles.at(-1),
-    { ...position(jump.x - handOffset, jump.y - 15 * scale), offset: .45 },
-    { ...runnerAt(basket), offset: .72 },
+    runnerAt(basket),
     { ...position(basket.x, basket.y + 20 * scale), opacity: 0 },
-  ], { duration: 500, fill: "forwards" }).finished;
+  ], { duration: 180, fill: "forwards" }).finished;
   flightBall.hidden = true;
 }

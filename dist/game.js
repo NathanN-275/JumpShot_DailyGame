@@ -1,6 +1,9 @@
 const RUN_LENGTH = 7;
 const QUESTION_SECONDS = 30;
 const BEST_SCORE_KEY = "jumpshot-best-score";
+const DAILY_KEY = "jumpshot-day-";
+const DAILY_TZ = "America/New_York";
+const dailyCalendar = new Intl.DateTimeFormat("en", { timeZone: DAILY_TZ, year: "numeric", month: "2-digit", day: "2-digit" });
 const TIERS = {
   dunk: { label: "DUNK", rarity: "Common", points: 10 },
   jumpshot: { label: "JUMPSHOT", rarity: "Uncommon", points: 50 },
@@ -12,6 +15,7 @@ const TIERS = {
 const QUESTION_BANK = [
   {
     prompt: "Name an NBA player with 100+ career three-pointers.",
+    category: "shooting-records",
     hint: "Any era. A deeper cut is worth more.",
     answers: [
       ["Steph Curry", "dunk", ["Stephen Curry", "Steph", "Stephen Curry"]],
@@ -35,6 +39,7 @@ const QUESTION_BANK = [
   },
   {
     prompt: "Name an NBA player who scored 70+ points in a game.",
+    category: "single-game-scoring",
     hint: "Eleven players have reached the 70-point club.",
     answers: [
       ["Wilt Chamberlain", "dunk", ["Wilt"]],
@@ -53,6 +58,7 @@ const QUESTION_BANK = [
   },
   {
     prompt: "Name an NBA player with at least three regular-season MVP awards.",
+    category: "season-mvp",
     hint: "Nine players have won three or more.",
     answers: [
       ["Kareem Abdul-Jabbar", "dunk", ["Kareem", "Kareem Abdul Jabbar"]],
@@ -69,12 +75,13 @@ const QUESTION_BANK = [
   },
   {
     prompt: "Name an NBA player who has won Defensive Player of the Year more than once.",
+    category: "defense",
     hint: "There are ten multi-time winners in league history.",
     answers: [
-      ["Michael Jordan", "dunk", ["Jordan", "MJ"]],
       ["Dwight Howard", "dunk", ["Dwight"]],
       ["Dennis Rodman", "dunk", ["Rodman"]],
       ["Rudy Gobert", "dunk", ["Gobert"]],
+      ["Kawhi Leonard", "jumpshot", ["Kawhi"]],
       ["Dikembe Mutombo", "jumpshot", ["Mutombo"]],
       ["Ben Wallace", "jumpshot"],
       ["Hakeem Olajuwon", "three", ["Hakeem"]],
@@ -86,6 +93,7 @@ const QUESTION_BANK = [
   },
   {
     prompt: "Name an NBA player with six or more championship rings.",
+    category: "player-championships",
     hint: "The Celtics dynasty has some deep cuts.",
     answers: [
       ["Michael Jordan", "dunk", ["Jordan", "MJ"]],
@@ -106,6 +114,7 @@ const QUESTION_BANK = [
   },
   {
     prompt: "Name an NBA player who won four or more scoring titles.",
+    category: "scoring-titles",
     hint: "Five players have reached that mark.",
     answers: [
       ["Michael Jordan", "dunk", ["Jordan", "MJ"]],
@@ -118,6 +127,7 @@ const QUESTION_BANK = [
   },
   {
     prompt: "Name an NBA player who scored 80+ points in a game.",
+    category: "single-game-scoring",
     hint: "Only three players have done it.",
     answers: [
       ["Wilt Chamberlain", "dunk", ["Wilt"]],
@@ -128,6 +138,7 @@ const QUESTION_BANK = [
   },
   {
     prompt: "Name an NBA player with at least 100 regular-season triple-doubles.",
+    category: "triple-doubles",
     hint: "Six players have crossed the century mark.",
     answers: [
       ["Russell Westbrook", "dunk", ["Westbrook", "Russ"]],
@@ -141,6 +152,7 @@ const QUESTION_BANK = [
   },
   {
     prompt: "Name an NBA player who averaged a triple-double for a full season.",
+    category: "triple-doubles",
     hint: "Just three players have done it.",
     answers: [
       ["Russell Westbrook", "dunk", ["Westbrook", "Russ"]],
@@ -150,6 +162,8 @@ const QUESTION_BANK = [
     source: "https://www.nba.com/news/nuggets-nikola-jokic-averages-triple-double-for-season",
   },
 ];
+
+const questionsByPrompt = new Map([...NAME_QUESTIONS, ...QUESTION_BANK, ...EXTRA_HISTORY_QUESTIONS].map((question) => [question.prompt, question]));
 
 const $ = (selector) => document.querySelector(selector);
 const form = $("#answer-form");
@@ -172,6 +186,10 @@ let runQuestions = [];
 let questionIndex = 0;
 let score = 0;
 let redScore = 0;
+let gameDay = "";
+let homeDay = "";
+let deadline = null;
+let lastDailySave = null;
 let secondsLeft = QUESTION_SECONDS;
 let timerId = null;
 let transitionId = null;
@@ -192,6 +210,25 @@ function readBestScore() {
 
 function saveBestScore(value) {
   try { localStorage.setItem(BEST_SCORE_KEY, String(value)); } catch { /* Some private browser modes disable local storage. */ }
+}
+
+function dailyDate() {
+  const parts = Object.fromEntries(dailyCalendar.formatToParts(new Date()).map(({ type, value }) => [type, value]));
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+function readDaily(day) {
+  try {
+    const saved = localStorage.getItem(DAILY_KEY + day);
+    if (saved) return JSON.parse(saved);
+  } catch { /* An in-memory save still works for the current tab. */ }
+  return lastDailySave?.day === day ? lastDailySave : null;
+}
+
+function saveDaily(nextIndex, nextDeadline) {
+  const saved = { day: gameDay, index: nextIndex, deadline: nextDeadline, score, redScore, prompts: runQuestions.map(({ prompt }) => prompt) };
+  lastDailySave = saved;
+  try { localStorage.setItem(DAILY_KEY + gameDay, JSON.stringify(saved)); } catch { /* Storage can be disabled in a private window. */ }
 }
 
 function normalize(value) {
@@ -221,7 +258,13 @@ function distanceAtMostOne(left, right) {
     if (edits > 1) return 2;
     if (left.length > right.length) i += 1;
     else if (right.length > left.length) j += 1;
-    else { i += 1; j += 1; }
+    else if (left[i] === right[j + 1] && left[i + 1] === right[j]) {
+      i += 2;
+      j += 2;
+    } else {
+      i += 1;
+      j += 1;
+    }
   }
   return edits + (i < left.length || j < right.length ? 1 : 0);
 }
@@ -238,6 +281,7 @@ function matchAnswer(question, rawAnswer) {
   const exact = choices.find((choice) => choice.accepted.includes(typed));
   if (exact) return { ...exact, corrected: false };
 
+  if (question.nameRule && KNOWN_NAME_KEYS.has(letterKey(typed))) return null;
   if (typed.length < 5) return null;
   const near = choices.filter((choice) => choice.accepted.some((alias) => distanceAtMostOne(typed, alias) === 1));
   const unique = new Map(near.map((choice) => [choice.name, choice]));
@@ -276,14 +320,15 @@ function setFormEnabled(enabled) {
 
 function startClock() {
   clearInterval(timerId);
-  setTimer(QUESTION_SECONDS);
-  timerId = setInterval(() => {
-    setTimer(secondsLeft - 1);
+  const tick = () => {
+    setTimer(Math.max(0, Math.ceil((deadline - Date.now()) / 1000)));
     if (secondsLeft <= 0) resolveQuestion(null);
-  }, 1000);
+  };
+  timerId = setInterval(tick, 200);
+  tick();
 }
 
-function showQuestion() {
+function showQuestion(resumeDeadline = null) {
   clearPlayState();
   if (questionIndex >= RUN_LENGTH) {
     finishRun();
@@ -294,26 +339,52 @@ function showQuestion() {
   $("#period").textContent = `Q${questionIndex + 1} · 30 SEC`;
   promptElement.textContent = question.prompt;
   $("#prompt-hint").textContent = question.hint;
+  answerInput.placeholder = question.team ? "Type a team name…" : "Type a player name…";
   answerInput.value = "";
   setResult();
   setFormEnabled(true);
+  deadline = resumeDeadline ?? Date.now() + QUESTION_SECONDS * 1000;
+  saveDaily(questionIndex, deadline);
   startClock();
 }
 
-function pause(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+async function playTimeout(finish) {
+  const callout = $("#play-call");
+  if (!finish) {
+    await playCourtShot("jumpshot", { miss: true });
+    document.body.classList.add("shot-missed");
+    callout.textContent = "BRICK";
+    setResult("Shot clock expired. Red grabbed the rebound.", "0 pts", "is-miss");
+    return;
+  }
+
+  document.body.classList.add("red-fast-break");
+  callout.textContent = "TURNOVER";
+  const calloutTime = new Promise((resolve) => setTimeout(resolve, 500));
+  await Promise.all([playRedFastBreak(finish), calloutTime]);
+  redScoreElement.textContent = String(redScore).padStart(2, "0");
+  callout.textContent = `RED ${finish.label} +${finish.points}`;
+  setResult("Shot clock expired. Red scored on the fast break.", "0 pts", "is-miss");
 }
 
 async function resolveQuestion(match) {
   if (locked) return;
+  const saved = readDaily(gameDay);
+  if (saved && (saved.index !== questionIndex || saved.deadline !== deadline)) {
+    startRun(gameDay);
+    return;
+  }
   clearInterval(timerId);
   setFormEnabled(false);
   setResult();
   document.body.classList.add("is-shooting");
+  const tier = match ? TIERS[match.tier] : null;
+  const finish = !tier && Math.random() >= .5 ? RED_FINISHES[Math.floor(Math.random() * RED_FINISHES.length)] : null;
+  if (tier) score += tier.points;
+  if (finish) redScore += finish.points;
+  saveDaily(questionIndex + 1, null);
   if (match) {
-    const tier = TIERS[match.tier];
     await playCourtShot(match.tier);
-    score += tier.points;
     scoreElement.textContent = formatScore(score);
     document.body.classList.add("shot-made");
     $("#play-call").textContent = `${tier.label} +${tier.points}`;
@@ -321,21 +392,15 @@ async function resolveQuestion(match) {
     setResult(`${correctedText} ${tier.rarity} · ${tier.label}`, `+${tier.points} pts`, "is-good");
     if (match.corrected) resultStrip.classList.add("is-corrected");
   } else {
-    await playCourtShot("jumpshot", { miss: true });
-    document.body.classList.add("shot-missed");
-    $("#play-call").textContent = "BRICK";
-    await pause(750);
-    document.body.classList.replace("shot-missed", "red-fast-break");
-    $("#play-call").textContent = "TURNOVER";
-    await Promise.all([playRedFastBreak(), pause(500)]);
-    redScore += 2;
-    redScoreElement.textContent = String(redScore).padStart(2, "0");
-    $("#play-call").textContent = "FAST BREAK +2";
-    setResult("Shot clock expired. Red scored on the fast break.", "0 pts", "is-miss");
+    await playTimeout(finish);
   }
 
   questionIndex += 1;
-  transitionId = setTimeout(showQuestion, 1900);
+  transitionId = setTimeout(() => {
+    const next = readDaily(gameDay);
+    if (next && (next.index !== questionIndex || next.deadline !== null)) startRun(gameDay);
+    else showQuestion();
+  }, 1900);
 }
 
 function finishRun() {
@@ -350,40 +415,85 @@ function finishRun() {
   $("#final-score").textContent = formatScore(score);
   bestScoreElement.textContent = formatScore(best);
   finishCard.classList.remove("hidden");
+  introCard.classList.add("hidden");
+  scoreElement.textContent = formatScore(score);
+  redScoreElement.textContent = String(redScore).padStart(2, "0");
   questionNumberElement.textContent = "07";
   $("#period").textContent = "FINAL";
   setTimer(0);
   setResult(`Final score: ${formatScore(score)} points. Best: ${formatScore(best)}.`, "FINAL", "is-good");
 }
 
-function shuffle(items) {
-  const copy = [...items];
-  for (let index = copy.length - 1; index > 0; index -= 1) {
-    const pick = Math.floor(Math.random() * (index + 1));
-    [copy[index], copy[pick]] = [copy[pick], copy[index]];
+function dailyQuestions(day) {
+  let seed = Math.imul(Number(day.replaceAll("-", "")), 0x9e3779b1) >>> 0;
+  function shuffled(questions) {
+    const copy = [...questions];
+    for (let index = copy.length - 1; index > 0; index -= 1) {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      const pick = Math.floor(seed / 4294967296 * (index + 1));
+      [copy[index], copy[pick]] = [copy[pick], copy[index]];
+    }
+    return copy;
   }
-  return copy;
+
+  const starters = shuffled(NAME_QUESTIONS).slice(0, 2);
+  const categories = new Set();
+  const history = shuffled([...QUESTION_BANK, ...EXTRA_HISTORY_QUESTIONS]).filter((question) => {
+    const category = question.category ?? question.prompt;
+    if (categories.has(category)) return false;
+    categories.add(category);
+    return true;
+  });
+  return [...starters, ...history.slice(0, RUN_LENGTH - starters.length)];
 }
 
-function startRun() {
+function startRun(day) {
   clearInterval(timerId);
   clearTimeout(transitionId);
-  runQuestions = shuffle(QUESTION_BANK).slice(0, RUN_LENGTH);
-  questionIndex = 0;
-  score = 0;
-  redScore = 0;
+  gameDay = day;
+  homeDay = gameDay;
+  const saved = readDaily(gameDay);
+  const savedQuestions = saved?.prompts?.map((prompt) => questionsByPrompt.get(prompt));
+  runQuestions = savedQuestions?.length === RUN_LENGTH && savedQuestions.every(Boolean) ? savedQuestions : dailyQuestions(gameDay);
+  questionIndex = saved?.index ?? 0;
+  score = saved?.score ?? 0;
+  redScore = saved?.redScore ?? 0;
   scoreElement.textContent = formatScore(score);
-  redScoreElement.textContent = "00";
+  redScoreElement.textContent = String(redScore).padStart(2, "0");
   finishCard.classList.add("hidden");
   introCard.classList.add("hidden");
   document.body.classList.remove("is-finished");
   document.body.classList.add("is-playing");
-  showQuestion();
+  showQuestion(saved?.deadline ?? null);
+}
+
+function showDailyHome() {
+  homeDay = dailyDate();
+  const saved = readDaily(homeDay);
+  if (saved?.index >= RUN_LENGTH) {
+    score = saved.score;
+    redScore = saved.redScore;
+    finishRun();
+    return;
+  }
+
+  document.body.classList.remove("is-finished");
+  finishCard.classList.add("hidden");
+  introCard.classList.remove("hidden");
+  scoreElement.textContent = "000";
+  redScoreElement.textContent = "00";
+  $("#period").textContent = "TIP OFF";
+  $("#start-label").textContent = saved ? "RESUME" : "TIP OFF";
 }
 
 form.addEventListener("submit", (event) => {
   event.preventDefault();
   if (locked) return;
+  if (Date.now() >= deadline) {
+    setTimer(0);
+    resolveQuestion(null);
+    return;
+  }
   const match = matchAnswer(runQuestions[questionIndex], answerInput.value);
   if (!match) {
     setResult("Answer not recognized. Try again.", "", "is-miss");
@@ -394,9 +504,8 @@ form.addEventListener("submit", (event) => {
   resolveQuestion(match);
 });
 
-$("#start-button").addEventListener("click", startRun);
-$("#replay-button").addEventListener("click", startRun);
-
-const savedBest = readBestScore();
-bestScoreElement.textContent = formatScore(savedBest);
-setTimer(QUESTION_SECONDS);
+$("#start-button").addEventListener("click", () => startRun(dailyDate()));
+showDailyHome();
+setInterval(() => {
+  if (!document.body.classList.contains("is-playing") && homeDay !== dailyDate()) showDailyHome();
+}, 15000);

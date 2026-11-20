@@ -11,6 +11,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./styles.css" />
     <script src="./court.js" defer></script>
+    <script src="./players.js" defer></script>
+    <script src="./questions.js" defer></script>
     <script src="./game.js" defer></script>
   </head>
   <body>
@@ -59,21 +61,22 @@
           <div class="court-sprite sprite-red red-three" aria-hidden="true"><span class="sprite-shadow"></span><span class="sprite-arm-back"></span><span class="sprite-head"></span><span class="sprite-body"></span><span class="sprite-arm"></span><span class="sprite-legs"></span></div>
           <div class="court-sprite sprite-red red-four" aria-hidden="true"><span class="sprite-shadow"></span><span class="sprite-arm-back"></span><span class="sprite-head"></span><span class="sprite-body"></span><span class="sprite-arm"></span><span class="sprite-legs"></span></div>
           <div class="court-sprite sprite-red red-five" aria-hidden="true"><span class="sprite-shadow"></span><span class="sprite-arm-back"></span><span class="sprite-head"></span><span class="sprite-body"></span><span class="sprite-arm"></span><span class="sprite-legs"></span></div>
+          <div class="court-sprite sprite-official" aria-hidden="true"><span class="sprite-shadow"></span><span class="sprite-arm-back"></span><span class="sprite-head"></span><span class="sprite-body"></span><span class="sprite-arm"></span><span class="sprite-legs"></span></div>
           <div class="play-call" id="play-call" aria-live="polite"></div>
           <div class="intro-card" id="intro-card">
-            <div class="intro-eyebrow"><span class="pixel-star">✦</span> A RARE ANSWER ARCADE</div>
+            <div class="intro-eyebrow"><span class="pixel-star">✦</span> DAILY NBA TRIVIA</div>
             <h1>KNOW THE<br /><em>GAME?</em></h1>
             <p>NBA history. Seven possessions. How deep is your bag?</p>
             <div class="rules-row"><span><b>07</b> QUESTIONS</span><span><b>30</b> SEC / SHOT</span></div>
-            <button class="primary-button" id="start-button" type="button"><span>TIP OFF</span><b aria-hidden="true">↗</b></button>
-            <div class="intro-note">Niche answers score more. Trust your hoops IQ.</div>
+            <button class="primary-button" id="start-button" type="button"><span id="start-label">TIP OFF</span><b aria-hidden="true">↗</b></button>
+            <div class="intro-note">One game per day. Niche answers score more.</div>
           </div>
           <div class="finish-card hidden" id="finish-card" aria-live="polite">
             <span class="finish-label">FINAL BUZZER</span>
             <h2>THAT'S THE<br /><em>GAME.</em></h2>
             <div class="final-score"><span>YOUR SCORE</span><strong id="final-score">000</strong></div>
             <div class="best-line">PERSONAL BEST <b id="best-score">000</b></div>
-            <button class="primary-button" id="replay-button" type="button"><span>RUN IT BACK</span><b aria-hidden="true">↗</b></button>
+            <p class="daily-note">Today’s challenge is complete. The next game starts at midnight Eastern.</p>
           </div>
         </div>
       <section class="game-panel" aria-label="Trivia play">

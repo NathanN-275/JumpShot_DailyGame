@@ -43,7 +43,8 @@ button { color: inherit; }
 .arena-season { color: #8592a4; }
 .arena-season b { margin-left: 5px; color: var(--yellow); }
 .stands { height: 72px; flex: 0 0 72px; position: relative; z-index: 1; overflow: hidden; display: flex; align-items: center; justify-content: center; border-bottom: 8px solid #4d5865; background: repeating-linear-gradient(90deg, #202b3c 0 16px, #182334 16px 32px); }
-.crowd { height: 100%; flex: 1; opacity: .96; background-image: url("./fan-tile.svg"); background-size: 96px 76px; image-rendering: pixelated; }
+.crowd { height: 100%; flex: 1; background: url("./crowd.png") left top / auto 300% repeat-x; image-rendering: pixelated; }
+.crowd-two { background-position-x: 34px; }
 .ad-board { width: 48%; min-width: 270px; height: 48px; padding: 4px 10px; display: flex; align-items: center; justify-content: space-around; gap: 8px; border: 4px solid #596579; outline: 2px solid #182233; background: #15243a; color: #80d3f3; font: 9px var(--pixel); text-align: center; }
 .ad-board b { color: #f7e7c4; font-size: 9px; }
 .ad-board span { color: #9fb5ce; font-size: 7px; }
@@ -67,89 +68,46 @@ button { color: inherit; }
 .net { position: absolute; top: 55%; left: -1px; right: -1px; height: 14px; transform-origin: top; clip-path: polygon(0 0, 100% 0, 75% 100%, 25% 100%); background: repeating-linear-gradient(60deg, #fff1d5 0 1px, transparent 1px 4px), repeating-linear-gradient(-60deg, #fff1d5 0 1px, transparent 1px 4px); }
 .shot-ball { position: absolute; z-index: 7; width: 12px; height: 12px; border: 2px solid #784326; border-radius: 50%; background: #e88536; box-shadow: inset 2px 1px #ffc071; transform: translate(-50%, -50%); }
 .court-sprite {
-  --sprite-ink: #222036;
-  --skin: #b77950;
-  --hair: #292031;
-  --hairline: 7px;
-  --skin-shadow: color-mix(in srgb, var(--skin), #50283a 36%);
+  --sprite-row: 0;
   position: absolute;
   z-index: 5;
   width: 34px;
   height: 58px;
   transform: translate(-50%, -50%) scale(var(--player-scale, 1)) scaleX(var(--facing, 1));
 }
-.sprite-blue { --jersey: #2866c4; --jersey-dark: #183f81; --trim: #83c7ff; }
-.sprite-red { --jersey: #bd3e49; --jersey-dark: #792841; --trim: #ff9f92; --facing: -1; }
-.blue-two, .red-three { --skin: #e6af81; --hair: #774733; --hairline: 6px; }
-.blue-three, .red-one { --skin: #905a43; --hairline: 9px; }
-.blue-four, .red-two { --hairline: 4px; }
+.sprite-red { --facing: -1; }
 .blue-one { left: 60%; top: 43%; z-index: 6; }
-.blue-two { left: 68%; top: 20%; --player-scale: .85; }
-.blue-three { left: 88%; top: 9%; --player-scale: .82; }
-.blue-four { left: 70%; top: 75%; --player-scale: .9; }
-.blue-five { left: 85%; top: 51%; --skin: #ca895e; }
-.red-one { left: 70%; top: 42%; }
-.red-two { left: 78%; top: 27%; --player-scale: .9; }
-.red-three { left: 91%; top: 23%; --player-scale: .78; }
-.red-four { left: 79%; top: 66%; --player-scale: .82; }
-.red-five { left: 93%; top: 54%; --player-scale: .85; --skin: #ca895e; --hair: #58382b; }
+.blue-two { left: 68%; top: 20%; --sprite-row: 1; --player-scale: .85; }
+.blue-three { left: 88%; top: 9%; --sprite-row: 2; --player-scale: .82; }
+.blue-four { left: 70%; top: 75%; --sprite-row: 3; --player-scale: .9; }
+.blue-five { left: 85%; top: 51%; --sprite-row: 4; }
+.red-one { left: 70%; top: 42%; --sprite-row: 7; }
+.red-two { left: 78%; top: 27%; --sprite-row: 9; --player-scale: .9; }
+.red-three { left: 91%; top: 23%; --sprite-row: 6; --player-scale: .78; }
+.red-four { left: 79%; top: 66%; --sprite-row: 5; --player-scale: .82; }
+.red-five { left: 93%; top: 54%; --sprite-row: 8; --player-scale: .85; }
+.sprite-official { left: 40%; top: 11%; --sprite-row: 10; --player-scale: .83; }
 
-/* Keep the limbs separate so the same silhouettes work in every shot pose. */
-.sprite-head {
-  position: absolute; z-index: 4; left: 8px; top: 1px; width: 21px; height: 21px;
-  background: var(--sprite-ink);
-  clip-path: polygon(4px 0, 16px 0, 16px 2px, 19px 2px, 19px 8px, 21px 8px, 21px 16px, 18px 16px, 18px 19px, 14px 19px, 14px 21px, 6px 21px, 6px 18px, 2px 18px, 2px 14px, 0 14px, 0 5px, 4px 5px);
-}
-.sprite-head::before {
-  content: ""; position: absolute; inset: 2px;
-  background: linear-gradient(90deg, var(--skin-shadow) 4px, var(--skin) 4px);
-  box-shadow: inset 0 -3px var(--skin-shadow);
-}
-.sprite-head::after {
-  content: ""; position: absolute; inset: 2px;
-  background:
-    linear-gradient(var(--sprite-ink) 0 0) 13px 7px / 3px 3px,
-    linear-gradient(#f6e3ce 0 0) 11px 7px / 3px 2px,
-    linear-gradient(var(--skin-shadow) 0 0) 12px 13px / 6px 2px,
-    linear-gradient(var(--hair) 0 0) top / 100% 5px,
-    linear-gradient(var(--hair) 0 0) 0 4px / var(--hairline) 9px;
+/* The atlas has five columns for the head, jersey, arms, and legs. */
+.sprite-head, .sprite-body, .sprite-arm, .sprite-arm-back, .sprite-legs {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  background-image: url("./athletes.png");
+  background-size: 160px 352px;
   background-repeat: no-repeat;
+  background-position: var(--sprite-column) calc(var(--sprite-row) * -32px);
+  image-rendering: pixelated;
 }
-.sprite-body {
-  position: absolute; z-index: 3; left: 5px; top: 19px; width: 24px; height: 19px;
-  background: var(--sprite-ink);
-  clip-path: polygon(4px 0, 19px 0, 19px 2px, 24px 2px, 24px 7px, 21px 7px, 21px 19px, 2px 19px, 2px 7px, 0 7px, 0 2px, 4px 2px);
-}
-.sprite-body::before {
-  content: ""; position: absolute; inset: 2px;
-  background: linear-gradient(90deg, var(--jersey-dark) 0 5px, var(--jersey) 5px 16px, var(--jersey-dark) 16px);
-  box-shadow: inset 0 2px var(--trim), inset 0 -2px var(--jersey-dark);
-}
-.sprite-body::after {
-  content: ""; position: absolute; left: 12px; top: 7px; width: 5px; height: 6px;
-  background: linear-gradient(90deg, #f6e6d4 2px, transparent 2px 3px, #f6e6d4 3px);
-}
-.sprite-arm, .sprite-arm-back {
-  position: absolute; top: 21px; width: 9px; height: 18px;
-  border: 2px solid var(--sprite-ink);
-  border-radius: 2px;
-  background: linear-gradient(var(--skin) 0 11px, #f1dfc9 11px 13px, var(--skin) 13px);
-  box-shadow: inset -2px 0 var(--skin-shadow);
-  transform-origin: 50% 2px;
-}
-.sprite-arm { z-index: 4; right: 0; transform: rotate(-37deg); }
-.sprite-arm-back { z-index: 1; left: 3px; transform: rotate(29deg); background: var(--skin-shadow); }
-.sprite-red .sprite-arm { transform: rotate(-55deg); }
-.blue-one .sprite-arm { right: -1px; transform: rotate(-16deg); }
-.sprite-legs { position: absolute; z-index: 2; left: 6px; top: 34px; width: 23px; height: 23px; transform-origin: top; }
-.sprite-legs::before, .sprite-legs::after {
-  content: ""; position: absolute; width: 11px; height: 22px; border: 2px solid var(--sprite-ink);
-  clip-path: polygon(0 0, 8px 0, 8px 16px, 11px 16px, 11px 100%, 0 100%);
-  background: linear-gradient(var(--jersey-dark) 0 6px, var(--skin) 6px 12px, #deeff2 12px 15px, #fbecd4 15px);
-}
-.sprite-legs::before { left: 0; top: 0; transform: rotate(12deg); filter: brightness(.83); }
-.sprite-legs::after { left: 12px; top: 2px; transform: rotate(-8deg); }
-.sprite-shadow { position: absolute; left: 0; bottom: -5px; width: 34px; height: 10px; border-radius: 50%; background: #32242455; }
+.sprite-head { --sprite-column: 0px; left: 3px; top: -5px; z-index: 4; }
+.sprite-body { --sprite-column: -32px; left: 0; top: 18px; z-index: 3; }
+.sprite-arm, .sprite-arm-back { top: 20px; transform-origin: 12px 4px; }
+.sprite-arm { --sprite-column: -64px; left: 16px; z-index: 4; transform: rotate(-21deg); }
+.sprite-arm-back { --sprite-column: -96px; left: -3px; z-index: 1; transform: rotate(26deg); }
+.sprite-red .sprite-arm { transform: rotate(-37deg); }
+.blue-one .sprite-arm { transform: rotate(-16deg); }
+.sprite-legs { --sprite-column: -128px; left: 0; top: 34px; z-index: 2; transform-origin: 50% 0; }
+.sprite-shadow { position: absolute; left: 1px; bottom: -5px; width: 33px; height: 10px; border-radius: 50%; background: #34273560; }
 .blue-one .sprite-shadow::before { content: ""; position: absolute; inset: -4px; border: 2px solid #f8f1da; border-bottom: 3px solid #38d47c; border-radius: 50%; }
 .sprite-ball { display: none; position: absolute; right: -5px; top: 32px; z-index: 5; width: 12px; height: 12px; border-radius: 50%; background: #dc7b35; border: 2px solid #754628; box-shadow: inset 3px 0 0 #f2ae67; }
 .blue-one .sprite-ball { display: block; }
@@ -165,6 +123,7 @@ button { color: inherit; }
 .intro-card h1, .finish-card h2 { margin: 15px 0 10px; font: 22px/1.55 var(--pixel); letter-spacing: -1px; }
 .intro-card h1 em, .finish-card h2 em { color: #8ec6ff; font-style: normal; }
 .intro-card p { max-width: 320px; margin: 0 auto 18px; color: #c5cfdb; font-size: 14px; line-height: 1.5; }
+.daily-note { margin: 0 auto; max-width: 32ch; color: #c5cfdb; font-size: 14px; }
 .rules-row { display: flex; justify-content: center; gap: 14px; margin: 0 0 18px; color: #c1cbd8; font: 7px var(--pixel); }
 .rules-row b { display: block; margin-bottom: 5px; color: var(--green); font-size: 12px; }
 .primary-button { width: 100%; min-height: 48px; display: flex; justify-content: center; align-items: center; position: relative; border: 2px solid #ffe49a; border-radius: 4px; background: linear-gradient(#ffd56a, #f3a83c); color: #271b15; font: 10px var(--pixel); cursor: pointer; box-shadow: 0 4px 0 #a7602b, inset 0 1px #fff4c3; transition: transform .12s, filter .12s; }
@@ -229,11 +188,13 @@ body.is-playing .intro-card, body.is-finished .intro-card { display: none; }
 body:not(.is-playing) .game-panel { display: none; }
 body.is-playing .game-panel { border-color: #63748b; }
 body.is-playing .court-sprite.blue-one { animation: idle-bounce 1.3s steps(2, end) infinite; }
+body.is-playing:not(.is-shooting) .blue-one .sprite-ball { animation: idle-dribble .65s ease-in-out infinite; }
 body.is-shooting .court-sprite.blue-one { animation: none; z-index: 8; }
 body.shot-made .play-call { animation: callout 1.1s ease both; }
 body.shot-missed .play-call { animation: callout 1.5s ease both; color: #ff9a8f; text-shadow: 2px 2px #631f26; }
 body.red-fast-break .play-call { opacity: 1; transform: translateX(-50%); color: #ff9a8f; text-shadow: 2px 2px #631f26; }
 @keyframes idle-bounce { 50% { translate: 0 -3px; } }
+@keyframes idle-dribble { 50% { translate: 2px 13px; } }
 @keyframes callout { 0% { opacity: 0; transform: translate(-50%, 12px) scale(.7); } 20%, 75% { opacity: 1; transform: translate(-50%, 0) scale(1); } 100% { opacity: 0; transform: translate(-50%, -9px) scale(1.05); } }
 
 @media (min-height: 850px) and (min-width: 900px) { .app-shell { gap: 17px; } .arena { min-height: 0; } .court { height: auto; } }

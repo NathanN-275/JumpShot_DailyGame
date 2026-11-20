@@ -10,5 +10,13 @@ The initial answer pack uses these NBA history and statistics references:
 - [NBA players with multiple scoring titles](https://www.nba.com/news/nba-players-with-multiple-scoring-titles)
 - [Most triple-doubles in NBA history](https://www.nba.com/news/most-triple-doubles-in-nba-history)
 - [Players who averaged a triple-double for a season](https://www.nba.com/news/nuggets-nikola-jokic-averages-triple-double-for-season)
+- [NBA Finals MVP winners](https://www.nba.com/news/history-finals-mvp-winners)
+- [NBA Rookie of the Year winners](https://www.nba.com/news/history-rookie-of-the-year-winners)
+- [NBA Sixth Man of the Year winners](https://www.nba.com/news/history-sixth-man-of-the-year-winners)
+- [NBA Most Improved Player winners](https://www.nba.com/news/history-most-improved-award-winners)
+- [NBA Slam Dunk Contest winners](https://www.nba.com/news/history-slam-dunk-contest)
+- [NBA Three-Point Contest winners](https://www.nba.com/news/history-3-point-contest)
+- [NBA champions by season](https://www.nba.com/news/history-nba-champions)
+- [Player directory snapshot from nba_api](https://github.com/swar/nba_api/blob/master/src/nba_api/stats/library/data.py), dated October 21, 2026. Jumpshot keeps names and active status for the letter prompts.
 
-Tier choices are editorial game values, not official NBA rarity rankings. Answers score only when present in the relevant prompt's curated bank.
+Tier choices are game values. Letter prompts use curated headliner and familiar-name tiers, with active status as the fallback for other players. Historical prompts score answers from their own curated lists.
