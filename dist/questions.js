@@ -1,7 +1,12 @@
 const letterKey = (value) => value.normalize("NFD").toLowerCase().replace(/[^a-z]/g, "");
 
 const NAME_ALIASES = {
-  "Stephen Curry": ["Steph Curry", "Steph"],
+  "Stephen Curry": ["Steph Curry", "Steph", "Curry"],
+  "Klay Thompson": ["Klay"],
+  "Ray Allen": ["Ray"],
+  "Reggie Miller": ["Reggie"],
+  "J.J. Redick": ["JJ Redick", "JJ"],
+  "Chauncey Billups": ["Chauncey"],
   "LeBron James": ["LeBron"],
   "Michael Jordan": ["Jordan", "MJ"],
   "Kobe Bryant": ["Kobe"],
@@ -51,20 +56,35 @@ const FAMILIAR_NAMES = new Set([
   "Jaren Jackson Jr.", "Pascal Siakam", "Julius Randle", "Rudy Gobert", "Karl-Anthony Towns",
 ].map(letterKey));
 
+const THREE_POINT_TIERS = new Map([
+  ["Damian Lillard", "jumpshot"], ["Ray Allen", "dunk"], ["Klay Thompson", "dunk"],
+  ["Reggie Miller", "jumpshot"], ["Kyle Korver", "jumpshot"], ["J.J. Redick", "jumpshot"],
+  ["Steve Nash", "three"], ["Dell Curry", "three"], ["Dana Barros", "three"], ["Chauncey Billups", "three"],
+  ["Jason Kapono", "half"], ["Tim Legler", "half"], ["Voshon Lenard", "half"], ["Wesley Person", "half"],
+].map(([name, tier]) => [letterKey(name), tier]));
+
+const THREE_POINT_ANSWERS = CAREER_THREES.map(([name, made]) => {
+  const key = letterKey(name);
+  const curated = THREE_POINT_TIERS.get(key);
+  if (curated) return [name, curated];
+  if (HEADLINERS.has(key)) return [name, "dunk"];
+  if (FAMILIAR_NAMES.has(key) || made >= 1000) return [name, "jumpshot"];
+  return [name, made >= 300 ? "three" : "half"];
+});
+
 const aliasesByPlayer = new Map(Object.entries(NAME_ALIASES).map(([name, aliases]) => [letterKey(name), aliases]));
 const nbaNames = NBA_PLAYER_DIRECTORY.map(([first, last, active, display]) => {
   const name = display ?? `${first} ${last}`.trim();
   const full = letterKey(name);
   const tier = HEADLINERS.has(full) ? "dunk" : FAMILIAR_NAMES.has(full) ? "jumpshot" : active ? "three" : "half";
-  return { first: letterKey(first), last: letterKey(last), full, answer: [name, tier, aliasesByPlayer.get(full)] };
+  return { first: letterKey(first), last: letterKey(last), full, answer: [name, tier] };
 });
-const KNOWN_NAME_KEYS = new Set(nbaNames.map(({ full }) => full));
+const LAST_NAME_KEYS = new Map(nbaNames.map(({ full, last }) => [full, last]));
 
 function nameQuestion(prompt, qualifies) {
   return {
     prompt,
-    hint: "Current and former NBA players count. Use their full name.",
-    nameRule: true,
+    hint: "Current and former NBA players count. A unique last name works too.",
     answers: nbaNames.filter(qualifies).map((player) => player.answer),
   };
 }
@@ -104,13 +124,12 @@ const TEAM_ALIASES = {
 
 function historyQuestion(category, prompt, groups, team = false) {
   const tiers = ["dunk", "jumpshot", "three", "half"];
-  const aliases = team ? TEAM_ALIASES : NAME_ALIASES;
   return {
     category,
     prompt,
     team,
     hint: team ? "The team name or nickname counts." : "Think of any winner in the years shown.",
-    answers: groups.flatMap((names, index) => names.map((name) => [name, tiers[index], aliases[name]])),
+    answers: groups.flatMap((names, index) => names.map((name) => [name, tiers[index], team ? TEAM_ALIASES[name] : undefined])),
   };
 }
 

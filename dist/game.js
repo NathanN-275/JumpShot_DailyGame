@@ -16,25 +16,8 @@ const QUESTION_BANK = [
   {
     prompt: "Name an NBA player with 100+ career three-pointers.",
     category: "shooting-records",
-    hint: "Any era. A deeper cut is worth more.",
-    answers: [
-      ["Steph Curry", "dunk", ["Stephen Curry", "Steph", "Stephen Curry"]],
-      ["LeBron James", "dunk", ["Lebron James", "LeBron"]],
-      ["Klay Thompson", "dunk", ["Klay"]],
-      ["Ray Allen", "dunk", ["Ray"]],
-      ["Reggie Miller", "jumpshot", ["Reggie"]],
-      ["Damian Lillard", "jumpshot", ["Dame Lillard", "Dame"]],
-      ["Kyle Korver", "jumpshot"],
-      ["J.J. Redick", "jumpshot", ["JJ Redick", "J.J Redick", "JJ"]],
-      ["Steve Nash", "three"],
-      ["Dell Curry", "three"],
-      ["Dana Barros", "three"],
-      ["Chauncey Billups", "three", ["Chauncey"]],
-      ["Jason Kapono", "half"],
-      ["Tim Legler", "half"],
-      ["Voshon Lenard", "half"],
-      ["Wesley Person", "half"],
-    ],
+    hint: "Regular-season totals through the end of 2025–26.",
+    answers: THREE_POINT_ANSWERS,
     source: "https://www.nba.com/stats/alltime-leaders?StatCategory=FG3M",
   },
   {
@@ -273,15 +256,24 @@ function matchAnswer(question, rawAnswer) {
   const typed = normalize(rawAnswer);
   if (!typed) return null;
 
-  const choices = question.answers.map(([name, tier, aliases = []]) => ({
-    name,
-    tier,
-    accepted: [name, ...aliases].map(normalize),
-  }));
+  const choices = question.answers.map(([name, tier, aliases = []]) => {
+    const key = letterKey(name);
+    const sharedAliases = question.team ? [] : aliasesByPlayer.get(key) ?? [];
+    return { name, tier, accepted: [name, ...aliases, ...sharedAliases].map(normalize) };
+  });
   const exact = choices.find((choice) => choice.accepted.includes(typed));
   if (exact) return { ...exact, corrected: false };
 
-  if (question.nameRule && KNOWN_NAME_KEYS.has(letterKey(typed))) return null;
+  if (!question.team) {
+    const key = letterKey(typed);
+    if (LAST_NAME_KEYS.has(key)) return null;
+    const matchingLastNames = choices.filter(({ name }) => {
+      const last = LAST_NAME_KEYS.get(letterKey(name)) ?? letterKey(name.split(" ").at(-1));
+      return last === key;
+    });
+    if (matchingLastNames.length > 1) return { ambiguous: true };
+    if (matchingLastNames.length === 1) return { ...matchingLastNames[0], corrected: false };
+  }
   if (typed.length < 5) return null;
   const near = choices.filter((choice) => choice.accepted.some((alias) => distanceAtMostOne(typed, alias) === 1));
   const unique = new Map(near.map((choice) => [choice.name, choice]));
@@ -495,8 +487,9 @@ form.addEventListener("submit", (event) => {
     return;
   }
   const match = matchAnswer(runQuestions[questionIndex], answerInput.value);
-  if (!match) {
-    setResult("Answer not recognized. Try again.", "", "is-miss");
+  if (!match || match.ambiguous) {
+    const message = match?.ambiguous ? "More than one player matches. Add a first name." : "Answer not recognized. Try again.";
+    setResult(message, "", "is-miss");
     answerInput.focus({ preventScroll: true });
     answerInput.select();
     return;

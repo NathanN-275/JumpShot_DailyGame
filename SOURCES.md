@@ -3,6 +3,7 @@
 The initial answer pack uses these NBA history and statistics references:
 
 - [NBA all-time three-point leaders](https://www.nba.com/stats/alltime-leaders?StatCategory=FG3M)
+- [Historical player season totals](https://github.com/sumitrodatta/bball-reference-datasets/blob/master/Data/Player%20Totals.csv), compiled from Basketball Reference. Jumpshot sums NBA regular-season threes through 2025–26 by player ID and uses the combined team row when a player changed teams midseason.
 - [Every player to score 70 or more in an NBA game](https://www.nba.com/news/every-70-point-game-in-nba-history)
 - [NBA players to win at least 3 MVP awards](https://www.nba.com/news/nba-players-with-at-least-3-mvps)
 - [NBA Defensive Player of the Year winners](https://www.nba.com/news/history-defensive-player-of-the-year-winners)
