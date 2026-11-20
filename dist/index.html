@@ -10,6 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./styles.css" />
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="52e621da-1d80-4d3b-b140-a573814084b2"></script>
     <script src="./court.js" defer></script>
     <script src="./players.js" defer></script>
     <script src="./career-threes.js" defer></script>
@@ -21,7 +22,7 @@
     <main class="app-shell">
       <header class="topbar">
         <a class="brand" href="#" aria-label="Jumpshot home">
-          <span class="brand-ball" aria-hidden="true">●</span>
+          <span class="brand-ball" aria-hidden="true"></span>
           <span>JUMPSHOT<span class="brand-period">.</span></span>
         </a>
         <div class="scorebug" aria-label="Game score">
@@ -97,6 +98,14 @@
         <div class="result-strip hidden" id="result-strip" aria-live="polite"><span class="result-icon" aria-hidden="true"></span><span class="result-message" id="result-message"></span><span class="result-points" id="result-points"></span></div>
       </section>
         <div class="arena-bottomline"><span>DEMO V0.1 / ALL-TIME NBA</span><span class="live-tag"><i></i> LIVE GAME</span></div>
+      </section>
+
+      <section class="results-panel hidden" id="results-panel" aria-labelledby="results-heading">
+        <header class="results-heading">
+          <div><span class="results-kicker">FINAL BUZZER · DAILY RECAP</span><h2 id="results-heading">YOUR ANSWERS</h2><p>Open a prompt to browse every accepted answer by rarity.</p></div>
+          <span class="results-count">07 PROMPTS</span>
+        </header>
+        <div class="results-list" id="results-list"></div>
       </section>
 
       <footer class="footer-row"><span>JUMPSHOT ARCADE <b>·</b> A LOVE LETTER TO NBA HISTORY</span><span>NO COIN NEEDED <b>✦</b> JUST HOOPS KNOWLEDGE</span></footer>

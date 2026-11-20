@@ -83,20 +83,52 @@ const aliasesByPlayer = new Map(Object.entries(NAME_ALIASES).flatMap(([name, ali
   return variants.filter((variant) => variant.includes(" "))
     .map((variant) => [letterKey(variant), variants.filter((alias) => alias !== variant)]);
 }));
+
+const careerThreeTotalsByName = new Map(CAREER_THREES.map(([name, made]) => [letterKey(name), made]));
+
+function nameTierTieBreak(name) {
+  let hash = 2166136261;
+  for (const letter of name) hash = Math.imul(hash ^ letter.charCodeAt(0), 16777619);
+  return hash >>> 0;
+}
+
 const nbaNames = NBA_PLAYER_DIRECTORY.map(([first, last, active, display]) => {
   const name = display ?? `${first} ${last}`.trim();
   const full = letterKey(name);
   const tier = HEADLINERS.has(full) ? "dunk" : FAMILIAR_NAMES.has(full) ? "jumpshot" : active ? "three" : "half";
   const surname = last.replace(/\s+(?:Jr\.?|Sr\.?|II|III|IV|V)$/i, "");
-  return { first: letterKey(first), last: letterKey(last), surname: letterKey(surname), full, answer: [name, tier] };
+  return { first: letterKey(first), last: letterKey(last), surname: letterKey(surname), full, active, answer: [name, tier] };
 });
 const LAST_NAME_KEYS = new Map(nbaNames.map(({ full, last }) => [full, last]));
 
+// Rank tied names deterministically without favoring players by their initials.
+const rankedNames = nbaNames.map((player) => ({
+  ...player,
+  careerThrees: careerThreeTotalsByName.get(player.full) ?? 0,
+  tieBreak: nameTierTieBreak(player.full),
+})).sort((left, right) =>
+  right.active - left.active || right.careerThrees - left.careerThrees || left.tieBreak - right.tieBreak);
+
 function nameQuestion(prompt, qualifies) {
+  const curated = [];
+  const ranked = [];
+  for (const player of rankedNames.filter(qualifies)) {
+    const [name, tier] = player.answer;
+    if (tier === "dunk" || tier === "jumpshot") curated.push(player.answer);
+    else ranked.push(name);
+  }
+  const halfCourtCount = Math.floor((curated.length + ranked.length) / 10);
+  const halfCourtStart = Math.max(0, ranked.length - halfCourtCount);
+  const familiarCount = curated.filter(([, tier]) => tier === "jumpshot").length;
+  const jumpshotEnd = Math.max(0, Math.ceil((halfCourtStart - familiarCount) / 2));
+  const answers = [...curated, ...ranked.map((name, index) => {
+    const tier = index < jumpshotEnd ? "jumpshot" : index < halfCourtStart ? "three" : "half";
+    return [name, tier];
+  })];
   return {
     prompt,
     hint: "Current and former NBA players count. A unique last name works too.",
-    answers: nbaNames.filter(qualifies).map((player) => player.answer),
+    answers,
   };
 }
 
@@ -117,7 +149,7 @@ const NAME_QUESTIONS = [
 const TEAM_ALIASES = {
   "Los Angeles Lakers": ["Lakers", "LA Lakers"],
   "Boston Celtics": ["Celtics"],
-  "Philadelphia 76ers": ["76ers", "Sixers"],
+  "Philadelphia 76ers": ["76ers", "Sixers", "Philadelphia Seventy Sixers", "Seventy Sixers"],
   "Detroit Pistons": ["Pistons"],
   "Chicago Bulls": ["Bulls"],
   "Houston Rockets": ["Rockets"],
@@ -133,6 +165,7 @@ const TEAM_ALIASES = {
   "New York Knicks": ["Knicks"],
   "Atlanta Hawks": ["Hawks"],
   "Brooklyn Nets": ["Nets"],
+  "New Jersey Nets": ["Nets"],
   "Charlotte Hornets": ["Hornets"],
   "Indiana Pacers": ["Pacers"],
   "Los Angeles Clippers": ["Clippers", "LA Clippers"],

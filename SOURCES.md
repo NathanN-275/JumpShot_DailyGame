@@ -4,7 +4,7 @@ The answer bank uses these NBA history and statistics references:
 
 - [NBA all-time three-point leaders](https://www.nba.com/stats/alltime-leaders?StatCategory=FG3M)
 - [Historical player season totals](https://github.com/sumitrodatta/bball-reference-datasets/blob/master/Data/Player%20Totals.csv), compiled from Basketball Reference. Jumpshot uses only NBA regular-season data through 2025–26. League-wide totals and single-season records use the combined row for players who changed teams midseason. Team-tenure prompts count games from the rows for the named team.
-- [NBA regular-season records, 2026–27 NBA Guide](https://cdn.nba.com/manage/2026/10/2026-27-NBA-Guide_v2.pdf)
+- [NBA regular-season and Finals records, 2026–27 NBA Guide](https://cdn.nba.com/manage/2026/10/2026-27-NBA-Guide_v2.pdf)
 - [Every player to score 70 or more in an NBA game](https://www.nba.com/news/every-70-point-game-in-nba-history)
 - [NBA players to win at least 3 MVP awards](https://www.nba.com/news/nba-players-with-at-least-3-mvps)
 - [NBA Defensive Player of the Year winners](https://www.nba.com/news/history-defensive-player-of-the-year-winners)
@@ -30,4 +30,4 @@ The answer bank uses these NBA history and statistics references:
 - [NBA Cup champions and MVPs](https://www.nba.com/news/history-emirates-nba-cup-winners-index)
 - [Player directory snapshot from nba_api](https://github.com/swar/nba_api/blob/master/src/nba_api/stats/library/data.py), dated October 21, 2026. Jumpshot keeps names and active status for the letter prompts.
 
-Tier choices are game values. Letter prompts use curated headliner and familiar-name tiers, with active status as the fallback for other players. Historical prompts use curated lists or filter the career three-point totals. Year ranges for season awards and Finals refer to the calendar year the season ended.
+Tier choices are game values. Player-name prompts keep curated headliners at Dunk and familiar names at Jumpshot. The remaining names are ranked by active status, career threes, and a stable tie break. Each prompt caps Half Court at 10% of its answers and splits the middle tiers roughly evenly. Historical prompts use curated lists or filter the career three-point totals. Year ranges for season awards and Finals refer to the calendar year the season ended.
