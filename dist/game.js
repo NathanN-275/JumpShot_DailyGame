@@ -4,7 +4,7 @@ const BEST_SCORE_KEY = "jumpshot-best-score";
 const DAILY_KEY = "jumpshot-day-";
 const DAILY_TZ = "America/New_York";
 const ROTATION_START = "2026-11-20";
-const ROTATION_DAYS = 21;
+const EXPANDED_ROTATION_START = "2026-12-11";
 const NAME_QUESTIONS_PER_GAME = 2;
 const dailyCalendar = new Intl.DateTimeFormat("en", { timeZone: DAILY_TZ, year: "numeric", month: "2-digit", day: "2-digit" });
 const TIERS = {
@@ -150,8 +150,10 @@ const QUESTION_BANK = [
 ];
 
 const originalHistoryQuestions = [...QUESTION_BANK, ...EXTRA_HISTORY_QUESTIONS];
-const allNameQuestions = [...NAME_QUESTIONS, ...MORE_NAME_QUESTIONS];
-const allHistoryQuestions = [...originalHistoryQuestions, ...MORE_HISTORY_QUESTIONS];
+const firstRotationNames = [...NAME_QUESTIONS, ...MORE_NAME_QUESTIONS];
+const firstRotationHistory = [...originalHistoryQuestions, ...MORE_HISTORY_QUESTIONS];
+const allNameQuestions = [...firstRotationNames, ...NEW_NAME_QUESTIONS];
+const allHistoryQuestions = [...firstRotationHistory, ...NEW_HISTORY_QUESTIONS];
 const questionsByPrompt = new Map([...allNameQuestions, ...allHistoryQuestions].map((question) => [question.prompt, question]));
 
 const $ = (selector) => document.querySelector(selector);
@@ -220,71 +222,96 @@ function saveDaily(nextIndex, nextDeadline) {
   try { localStorage.setItem(DAILY_KEY + gameDay, JSON.stringify(saved)); } catch { /* Storage can be disabled in a private window. */ }
 }
 
-function normalize(value) {
+function answerKey(value) {
   return value
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/&/g, " and ")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim()
-    .replace(/\s+/g, " ");
+    .replace(/[^a-z0-9]/g, "");
 }
 
-function distanceAtMostOne(left, right) {
-  if (left === right) return 0;
-  if (Math.abs(left.length - right.length) > 1) return 2;
-  let i = 0;
-  let j = 0;
-  let edits = 0;
-  while (i < left.length && j < right.length) {
-    if (left[i] === right[j]) {
-      i += 1;
-      j += 1;
-      continue;
+const knownPlayerAnswers = new Set([
+  ...LAST_NAME_KEYS.keys(),
+  ...aliasesByPlayer.keys(),
+  ...Object.values(NAME_ALIASES).flat().map(answerKey),
+]);
+const knownLastNames = new Set(LAST_NAME_KEYS.values());
+const knownTeamAnswers = new Set(Object.entries(TEAM_ALIASES).flatMap(([name, aliases]) => [name, ...aliases].map(answerKey)));
+
+function editDistance(left, right, limit) {
+  if (Math.abs(left.length - right.length) > limit) return Infinity;
+  let previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+  let beforePrevious = new Array(right.length + 1);
+  let current = new Array(right.length + 1);
+  for (let row = 1; row <= left.length; row += 1) {
+    current[0] = row;
+    for (let column = 1; column <= right.length; column += 1) {
+      const same = left[row - 1] === right[column - 1];
+      current[column] = Math.min(current[column - 1] + 1, previous[column] + 1, previous[column - 1] + Number(!same));
+      if (row > 1 && column > 1 && left[row - 1] === right[column - 2] && left[row - 2] === right[column - 1]) {
+        current[column] = Math.min(current[column], beforePrevious[column - 2] + 1);
+      }
     }
-    edits += 1;
-    if (edits > 1) return 2;
-    if (left.length > right.length) i += 1;
-    else if (right.length > left.length) j += 1;
-    else if (left[i] === right[j + 1] && left[i + 1] === right[j]) {
-      i += 2;
-      j += 2;
-    } else {
-      i += 1;
-      j += 1;
-    }
+    [beforePrevious, previous, current] = [previous, current, beforePrevious];
   }
-  return edits + (i < left.length || j < right.length ? 1 : 0);
+  return previous[right.length] <= limit ? previous[right.length] : Infinity;
 }
 
 function matchAnswer(question, rawAnswer) {
-  const typed = normalize(rawAnswer);
+  const typed = answerKey(rawAnswer);
   if (!typed) return null;
 
-  const choices = question.answers.map(([name, tier, aliases = []]) => {
+  const choicesByName = new Map();
+  for (const [name, tier, aliases = []] of question.answers) {
+    if (choicesByName.has(name)) continue;
     const key = letterKey(name);
     const sharedAliases = question.team ? [] : aliasesByPlayer.get(key) ?? [];
-    return { name, tier, accepted: [name, ...aliases, ...sharedAliases].map(normalize) };
-  });
-  const exact = choices.find((choice) => choice.accepted.includes(typed));
-  if (exact) return { ...exact, corrected: false };
+    const accepted = [name, ...aliases, ...sharedAliases].map(answerKey);
+    const last = question.team ? "" : LAST_NAME_KEYS.get(key) ?? letterKey(name.split(" ").at(-1));
+    choicesByName.set(name, { name, tier, accepted, last });
+  }
+  const choices = [...choicesByName.values()];
+
+  const exact = choices.filter(({ accepted }) => accepted.includes(typed));
+  if (exact.length > 1) return { ambiguous: true };
+  if (exact.length === 1) return { ...exact[0], corrected: false };
 
   if (!question.team) {
-    const key = letterKey(typed);
-    if (LAST_NAME_KEYS.has(key)) return null;
-    const matchingLastNames = choices.filter(({ name }) => {
-      const last = LAST_NAME_KEYS.get(letterKey(name)) ?? letterKey(name.split(" ").at(-1));
-      return last === key;
-    });
+    if (knownPlayerAnswers.has(typed)) return null;
+    const matchingLastNames = choices.filter(({ last }) => last === typed);
     if (matchingLastNames.length > 1) return { ambiguous: true };
     if (matchingLastNames.length === 1) return { ...matchingLastNames[0], corrected: false };
+    if (knownLastNames.has(typed)) return null;
+  } else if (knownTeamAnswers.has(typed)) {
+    return null;
   }
-  if (typed.length < 5) return null;
-  const near = choices.filter((choice) => choice.accepted.some((alias) => distanceAtMostOne(typed, alias) === 1));
-  const unique = new Map(near.map((choice) => [choice.name, choice]));
-  if (unique.size !== 1) return null;
-  return { ...unique.values().next().value, corrected: true };
+
+  if (typed.length < 4) return null;
+  const canUseSurname = !question.team && !/\s/.test(rawAnswer.trim());
+  let nearest = null;
+  let closestDistance = Infinity;
+  let tied = false;
+  for (const choice of choices) {
+    const fullName = choice.accepted[0];
+    const limit = typed.length >= 9 && fullName.length >= 9 ? 2 : 1;
+    let distance = editDistance(typed, fullName, limit);
+    for (const alias of choice.accepted.slice(1)) {
+      if (alias.length >= 4) distance = Math.min(distance, editDistance(typed, alias, 1));
+    }
+    if (canUseSurname && choice.last.length >= 5) {
+      distance = Math.min(distance, editDistance(typed, choice.last, 1));
+    }
+    if (distance < closestDistance) {
+      nearest = choice;
+      closestDistance = distance;
+      tied = false;
+    } else if (nearest && distance === closestDistance) {
+      tied = true;
+    }
+  }
+  if (tied) return { ambiguous: true };
+  return nearest ? { ...nearest, corrected: true } : null;
 }
 
 function setTimer(value) {
@@ -437,9 +464,12 @@ function dailyShuffle(day) {
 
 function dailyQuestions(day) {
   if (day >= ROTATION_START) {
+    const expanded = day >= EXPANDED_ROTATION_START;
+    const start = expanded ? EXPANDED_ROTATION_START : ROTATION_START;
+    const rotation = expanded ? expandedDailyRotation : dailyRotation;
     // Subtract date-only values in UTC so daylight saving does not change the day index.
-    const elapsedDays = (Date.parse(day) - Date.parse(ROTATION_START)) / 86_400_000;
-    return dailyRotation[elapsedDays % ROTATION_DAYS];
+    const elapsedDays = (Date.parse(day) - Date.parse(start)) / 86_400_000;
+    return rotation[elapsedDays % rotation.length];
   }
 
   // Keep the original daily questions available for dates before the expanded rotation.
@@ -455,11 +485,11 @@ function dailyQuestions(day) {
   return [...starters, ...history.slice(0, RUN_LENGTH - starters.length)];
 }
 
-function buildDailyRotation() {
-  const shuffled = dailyShuffle(ROTATION_START);
-  const starters = shuffled(allNameQuestions);
+function buildDailyRotation(start, nameQuestions, historyQuestions) {
+  const shuffled = dailyShuffle(start);
+  const starters = shuffled(nameQuestions);
   const historyByCategory = new Map();
-  for (const question of shuffled(allHistoryQuestions)) {
+  for (const question of shuffled(historyQuestions)) {
     const category = question.category;
     if (!historyByCategory.has(category)) historyByCategory.set(category, []);
     historyByCategory.get(category).push(question);
@@ -467,7 +497,8 @@ function buildDailyRotation() {
 
   const categories = [...historyByCategory.values()];
   const historyPerGame = RUN_LENGTH - NAME_QUESTIONS_PER_GAME;
-  const games = Array.from({ length: ROTATION_DAYS }, (_, dayIndex) => {
+  const days = starters.length / NAME_QUESTIONS_PER_GAME;
+  const games = Array.from({ length: days }, (_, dayIndex) => {
     const first = dayIndex * NAME_QUESTIONS_PER_GAME;
     const names = starters.slice(first, first + NAME_QUESTIONS_PER_GAME);
     // Use the largest remaining categories first to spread them across the rotation.
@@ -478,7 +509,8 @@ function buildDailyRotation() {
   return shuffled(games);
 }
 
-const dailyRotation = buildDailyRotation();
+const dailyRotation = buildDailyRotation(ROTATION_START, firstRotationNames, firstRotationHistory);
+const expandedDailyRotation = buildDailyRotation(EXPANDED_ROTATION_START, allNameQuestions, allHistoryQuestions);
 
 function startRun(day) {
   clearInterval(timerId);
@@ -529,7 +561,7 @@ form.addEventListener("submit", (event) => {
   }
   const match = matchAnswer(runQuestions[questionIndex], answerInput.value);
   if (!match || match.ambiguous) {
-    const message = match?.ambiguous ? "More than one player matches. Add a first name." : "Answer not recognized. Try again.";
+    const message = match?.ambiguous ? "More than one answer matches. Type the full name." : "Answer not recognized. Try again.";
     setResult(message, "", "is-miss");
     answerInput.focus({ preventScroll: true });
     answerInput.select();

@@ -8,4 +8,6 @@ Open `dist/index.html` in a browser, or serve `dist/` with any static file serve
 
 Run `python3 art/draw_sprites.py` to regenerate the original player and crowd artwork.
 
-The 21-day rotation uses all 147 prompts once before repeating. Each game opens with two name prompts, followed by five NBA trivia questions from different categories. Edit `dist/questions.js` for the expanded bank and `dist/game.js` for the original pack. See [SOURCES.md](SOURCES.md) for the directory and NBA records used.
+The 28-day rotation starts December 11, 2026, after the initial 21-day rotation. It uses all 196 prompts once before repeating. Each game opens with two name prompts, followed by five NBA trivia questions from different categories. See [SOURCES.md](SOURCES.md) for the directory and NBA records used.
+
+Run `node --test` to check answer matching and the daily rotation.

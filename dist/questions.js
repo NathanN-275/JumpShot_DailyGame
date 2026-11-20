@@ -28,6 +28,11 @@ const NAME_ALIASES = {
   "Manu Ginobili": ["Manu"],
   "Vince Carter": ["Vince", "Vinsanity"],
   "Tiny Archibald": ["Nate Archibald", "Nathaniel Archibald"],
+  "Johnny Kerr": ["Red Kerr"],
+  "Lafayette Lever": ["Fat Lever"],
+  "Micheal Ray Richardson": ["Michael Ray Richardson"],
+  "Thomas Sanders": ["Tom Sanders", "Satch Sanders"],
+  "Dan Schayes": ["Danny Schayes"],
   "Tracy McGrady": ["T-Mac", "TMac"],
   "Ron Artest": ["Metta World Peace"],
   "Isaiah Rider": ["Isiah Rider", "J.R. Rider", "JR Rider"],
@@ -73,12 +78,17 @@ const THREE_POINT_ANSWERS = CAREER_THREES.map(([name, made]) => {
   return [name, made >= 300 ? "three" : "half"];
 });
 
-const aliasesByPlayer = new Map(Object.entries(NAME_ALIASES).map(([name, aliases]) => [letterKey(name), aliases]));
+const aliasesByPlayer = new Map(Object.entries(NAME_ALIASES).flatMap(([name, aliases]) => {
+  const variants = [name, ...aliases];
+  return variants.filter((variant) => variant.includes(" "))
+    .map((variant) => [letterKey(variant), variants.filter((alias) => alias !== variant)]);
+}));
 const nbaNames = NBA_PLAYER_DIRECTORY.map(([first, last, active, display]) => {
   const name = display ?? `${first} ${last}`.trim();
   const full = letterKey(name);
   const tier = HEADLINERS.has(full) ? "dunk" : FAMILIAR_NAMES.has(full) ? "jumpshot" : active ? "three" : "half";
-  return { first: letterKey(first), last: letterKey(last), full, answer: [name, tier] };
+  const surname = last.replace(/\s+(?:Jr\.?|Sr\.?|II|III|IV|V)$/i, "");
+  return { first: letterKey(first), last: letterKey(last), surname: letterKey(surname), full, answer: [name, tier] };
 });
 const LAST_NAME_KEYS = new Map(nbaNames.map(({ full, last }) => [full, last]));
 
@@ -263,6 +273,30 @@ const MORE_NAME_QUESTIONS = [
   nameQuestion("Name an NBA player with the same first and last initials.", ({ first, last }) => first[0] === last[0]),
 ];
 
+const NEW_NAME_QUESTIONS = [
+  ...["F", "G", "P"].map((letter) => nameQuestion(
+    `Name an NBA player with the letter ${letter} in their name.`,
+    ({ full }) => full.includes(letter.toLowerCase()),
+  )),
+  nameQuestion("Name an NBA player whose first name ends in A.", ({ first }) => first.endsWith("a")),
+  ...["D", "R"].map((letter) => nameQuestion(
+    `Name an NBA player whose last name starts with ${letter}.`,
+    ({ surname }) => surname.startsWith(letter.toLowerCase()),
+  )),
+  ...[[4, "four"], [5, "five"], [6, "six"]].map(([length, label]) => nameQuestion(
+    `Name an NBA player with a ${label}-letter first name.`,
+    ({ first }) => first.length === length,
+  )),
+  nameQuestion("Name an NBA player whose last name ends in S.", ({ surname }) => surname.endsWith("s")),
+  nameQuestion("Name an NBA player whose last name ends in SON.", ({ surname }) => surname.endsWith("son")),
+  ...[[4, "four"], [7, "seven"]].map(([length, label]) => nameQuestion(
+    `Name an NBA player with a ${label}-letter last name.`,
+    ({ surname }) => surname.length === length,
+  )),
+  nameQuestion("Name an NBA player whose last name starts and ends with the same letter.",
+    ({ surname }) => surname.length > 1 && surname[0] === surname.at(-1)),
+];
+
 const NBA_DIVISIONS = {
   Atlantic: [["Boston Celtics", "New York Knicks"], ["Philadelphia 76ers", "Toronto Raptors"], ["Brooklyn Nets"]],
   Central: [["Chicago Bulls", "Milwaukee Bucks"], ["Cleveland Cavaliers", "Detroit Pistons"], ["Indiana Pacers"]],
@@ -430,3 +464,11 @@ const MORE_HISTORY_QUESTIONS = [
     ["Kristaps Porzingis", "Patrick Beverley"], ["Trey Burke", "Spencer Dinwiddie"],
   ]),
 ];
+
+const directoryTiers = new Map(nbaNames.map(({ full, answer }) => [full, answer[1]]));
+const NEW_HISTORY_QUESTIONS = RECORD_AND_TEAM_PROMPTS.map(([category, prompt, hint, names]) => ({
+  category,
+  prompt,
+  hint,
+  answers: names.map((name) => [name, directoryTiers.get(letterKey(name)) ?? "half"]),
+}));
