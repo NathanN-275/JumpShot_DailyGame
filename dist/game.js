@@ -812,7 +812,10 @@ form.addEventListener("submit", (event) => {
   resolveQuestion(match);
 });
 
-$("#start-button").addEventListener("click", () => startRun(dailyDate()));
+$("#start-button").addEventListener("click", () => {
+  window.umami?.track?.("Game Started");
+  startRun(dailyDate());
+});
 showDailyHome();
 setInterval(() => {
   if (!document.body.classList.contains("is-playing") && homeDay !== dailyDate()) showDailyHome();
