@@ -76,10 +76,12 @@ button { color: inherit; }
 .blue-two { left: 42%; top: 40%; transform: translate(-50%, -50%) scale(.85); }
 .blue-three { left: 54%; top: 34%; transform: translate(-50%, -50%) scale(.82); }
 .blue-four { left: 48%; top: 53%; transform: translate(-50%, -50%) scale(.9); }
+.blue-five { left: 34%; top: 57%; --skin: #b67e58; }
 .red-one { left: 72%; top: 39%; }
 .red-two { left: 81%; top: 52%; transform: translate(-50%, -50%) scale(.9); }
 .red-three { left: 56%; top: 24%; transform: translate(-50%, -50%) scale(.78); }
 .red-four { left: 87%; top: 40%; transform: translate(-50%, -50%) scale(.82); }
+.red-five { left: 26%; top: 34%; transform: translate(-50%, -50%) scale(.85); --skin: #c49267; --hair: #58382b; }
 .sprite-head { position: absolute; width: 20px; height: 17px; left: 7px; top: 1px; background: var(--skin); border: 2px solid #2a2730; box-shadow: inset 0 -3px #754633, 4px 4px 0 #36292a; }
 .sprite-head::before { content: ""; position: absolute; left: -2px; top: -5px; width: 17px; height: 7px; background: var(--hair); box-shadow: 5px 3px 0 var(--hair), -2px 6px 0 var(--hair); }
 .sprite-head::after { content: ""; position: absolute; left: 11px; top: 6px; width: 3px; height: 3px; background: #201f25; box-shadow: 5px 3px 0 #e5b98e; }
