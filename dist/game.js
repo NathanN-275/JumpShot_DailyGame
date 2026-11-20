@@ -580,7 +580,7 @@ function finishRun() {
 
 function renderRunResults() {
   resultsList.replaceChildren();
-  const tierKeys = Object.keys(TIERS);
+  const tierKeys = Object.keys(TIERS).sort((left, right) => TIERS[right].points - TIERS[left].points);
 
   runQuestions.forEach((question, index) => {
     const entries = [...new Map(question.answers.map(([name, tier, aliases = []]) => [name, { name, tier, aliases }])).values()]
