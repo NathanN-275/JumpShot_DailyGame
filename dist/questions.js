@@ -117,7 +117,7 @@ const NAME_QUESTIONS = [
 const TEAM_ALIASES = {
   "Los Angeles Lakers": ["Lakers", "LA Lakers"],
   "Boston Celtics": ["Celtics"],
-  "Philadelphia 76ers": ["76ers", "Sixers"],
+  "Philadelphia 76ers": ["76ers", "Sixers", "Philadelphia Seventy Sixers", "Seventy Sixers"],
   "Detroit Pistons": ["Pistons"],
   "Chicago Bulls": ["Bulls"],
   "Houston Rockets": ["Rockets"],

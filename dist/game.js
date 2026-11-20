@@ -8,10 +8,10 @@ const EXPANDED_ROTATION_START = "2026-12-11";
 const NAME_QUESTIONS_PER_GAME = 2;
 const dailyCalendar = new Intl.DateTimeFormat("en", { timeZone: DAILY_TZ, year: "numeric", month: "2-digit", day: "2-digit" });
 const TIERS = {
-  dunk: { label: "DUNK", rarity: "Common", points: 10 },
-  jumpshot: { label: "JUMPSHOT", rarity: "Uncommon", points: 50 },
-  three: { label: "THREE POINTER", rarity: "Epic", points: 100 },
-  half: { label: "HALF-COURT SHOT", rarity: "Super niche", points: 200 },
+  dunk: { label: "DUNK", points: 10 },
+  jumpshot: { label: "JUMPSHOT", points: 50 },
+  three: { label: "3 POINTER", points: 100 },
+  half: { label: "HALF COURT", points: 200 },
 };
 
 // The first answer pack is curated by prompt. A new answer belongs in a question's bank before it can score.
@@ -332,6 +332,7 @@ function clearPlayState() {
 
 function setResult(message = "", points = "", state = "") {
   resultStrip.classList.remove("is-good", "is-miss", "is-corrected");
+  delete resultStrip.dataset.tier;
   resultStrip.classList.toggle("hidden", !message);
   if (state) resultStrip.classList.add(state);
   resultMessage.textContent = message;
@@ -418,7 +419,8 @@ async function resolveQuestion(match) {
     document.body.classList.add("shot-made");
     $("#play-call").textContent = `${tier.label} +${tier.points}`;
     const correctedText = match.corrected ? `Spelling fixed to ${match.name}.` : `${match.name} is in the answer bank.`;
-    setResult(`${correctedText} ${tier.rarity} · ${tier.label}`, `+${tier.points} pts`, "is-good");
+    setResult(`${correctedText} ${tier.label}`, `+${tier.points} pts`, "is-good");
+    resultStrip.dataset.tier = match.tier;
     if (match.corrected) resultStrip.classList.add("is-corrected");
   } else {
     await playTimeout(finish);
@@ -456,7 +458,7 @@ function finishRun() {
 
 function renderRunResults() {
   resultsList.replaceChildren();
-  const rarities = ["All", ...Object.values(TIERS).map(({ rarity }) => rarity)];
+  const tierKeys = Object.keys(TIERS);
 
   runQuestions.forEach((question, index) => {
     const entries = [...new Map(question.answers.map(([name, tier, aliases = []]) => [name, { name, tier, aliases }])).values()]
@@ -472,13 +474,15 @@ function renderRunResults() {
     const answer = runAnswers[index];
     accepted.className = answer === null ? "review-answer is-unanswered" : answer === false ? "review-answer is-unavailable" : "review-answer";
     accepted.textContent = typeof answer === "string" ? `YOUR ANSWER · ${answer}` : answer === null ? "NO ANSWER" : "ANSWER NOT RECORDED";
+    const acceptedEntry = question.answers.find(([name]) => name === answer);
+    if (acceptedEntry) accepted.dataset.tier = acceptedEntry[1];
     summary.append(prompt, accepted);
     details.append(summary);
 
     const browser = document.createElement("div");
     browser.className = "answer-browser";
     const filters = document.createElement("div");
-    filters.className = "rarity-filters";
+    filters.className = "tier-filters";
     filters.setAttribute("role", "group");
     filters.setAttribute("aria-label", `Filter answers for question ${index + 1}`);
     const searchLabel = document.createElement("label");
@@ -495,13 +499,12 @@ function renderRunResults() {
     answerList.setAttribute("aria-live", "polite");
     const listStatus = document.createElement("p");
     listStatus.className = "answer-list-status";
-    let activeRarity = "All";
+    let activeTier = "all";
 
     const renderAnswers = () => {
       const query = answerKey(search.value);
       const matches = entries.filter(({ name, tier, aliases }) => {
-        const rarity = TIERS[tier].rarity;
-        if (activeRarity !== "All" && rarity !== activeRarity) return false;
+        if (activeTier !== "all" && tier !== activeTier) return false;
         if (!query) return true;
         const sharedAliases = question.team ? [] : aliasesByPlayer.get(letterKey(name)) ?? [];
         return [name, ...aliases, ...sharedAliases].some((candidate) => answerKey(candidate).includes(query));
@@ -512,24 +515,26 @@ function renderRunResults() {
         const name = document.createElement("span");
         name.textContent = entry.name;
         const tier = document.createElement("span");
-        tier.className = "answer-rarity";
+        tier.className = "answer-tier";
+        tier.dataset.tier = entry.tier;
         const scoringTier = TIERS[entry.tier];
-        tier.textContent = `${scoringTier.rarity} · ${scoringTier.points} pts`;
+        tier.textContent = `${scoringTier.label} · ${scoringTier.points} pts`;
         row.append(name, tier);
         answerList.append(row);
       }
       listStatus.textContent = matches.length ? `${matches.length.toLocaleString()} answers` : "No matching answers.";
     };
 
-    for (const rarity of rarities) {
-      const count = rarity === "All" ? entries.length : entries.filter(({ tier }) => TIERS[tier].rarity === rarity).length;
+    for (const tierKey of ["all", ...tierKeys]) {
+      const count = tierKey === "all" ? entries.length : entries.filter(({ tier }) => tier === tierKey).length;
       const button = document.createElement("button");
       button.type = "button";
-      button.className = "rarity-filter";
-      button.setAttribute("aria-pressed", String(rarity === activeRarity));
-      button.textContent = `${rarity} ${count.toLocaleString()}`;
+      button.className = "tier-filter";
+      if (tierKey !== "all") button.dataset.tier = tierKey;
+      button.setAttribute("aria-pressed", String(tierKey === activeTier));
+      button.textContent = `${tierKey === "all" ? "ALL" : TIERS[tierKey].label} ${count.toLocaleString()}`;
       button.addEventListener("click", () => {
-        activeRarity = rarity;
+        activeTier = tierKey;
         for (const filter of filters.children) filter.setAttribute("aria-pressed", String(filter === button));
         renderAnswers();
       });

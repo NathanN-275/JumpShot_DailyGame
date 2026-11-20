@@ -10,6 +10,10 @@
   --red: #fb5d57;
   --yellow: #ffca59;
   --green: #72e0ae;
+  --tier-dunk: #c1c7d0;
+  --tier-jumpshot: #67df9c;
+  --tier-three: #bd91ff;
+  --tier-half: #ffca59;
   --pixel: "Press Start 2P", monospace;
   --ui: "Space Grotesk", system-ui, sans-serif;
 }
@@ -23,7 +27,10 @@ button { color: inherit; }
 .topbar { height: 54px; display: grid; grid-template-columns: 1fr minmax(420px, 1.4fr) 1fr; align-items: center; gap: 20px; }
 .brand { display: inline-flex; align-items: center; gap: 10px; width: fit-content; color: var(--ink); text-decoration: none; font: 11px var(--pixel); letter-spacing: -.7px; }
 .brand-period { color: var(--yellow); }
-.brand-ball { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; color: #1a2534; background: var(--yellow); border: 3px solid #ffe6a2; font-size: 14px; line-height: 1; box-shadow: 0 2px 0 #b67826; }
+.brand-ball { position: relative; width: 26px; height: 26px; display: block; overflow: hidden; border-radius: 50%; background: #f2ad45; border: 3px solid #ffe6a2; box-shadow: 0 2px 0 #b67826; }
+.brand-ball::before, .brand-ball::after { content: ""; position: absolute; border: 2px solid #83502c; border-radius: 50%; }
+.brand-ball::before { inset: -2px 5px; }
+.brand-ball::after { inset: 5px -2px; }
 .scorebug { height: 52px; display: grid; grid-template-columns: 1fr .7fr 1fr; overflow: hidden; border: 2px solid #536177; border-radius: 9px; background: #0d1521; box-shadow: 0 5px 0 #0a1019, inset 0 0 0 2px #263448; }
 .score-side { padding: 5px 10px; display: flex; align-items: center; gap: 8px; min-width: 0; }
 .score-blue { background: linear-gradient(100deg, #1854a4, #2876d2); }
@@ -158,17 +165,23 @@ button { color: inherit; }
 .review-answer.is-unanswered { color: #ff958b; }
 .review-answer.is-unavailable { color: #9ba9ba; }
 .answer-browser { padding: 2px 22px 20px; }
-.rarity-filters { display: flex; flex-wrap: wrap; gap: 7px; margin: 0 0 12px; }
-.rarity-filter { padding: 9px 11px; border: 1px solid #3d4d64; border-radius: 5px; background: #1a2638; color: #a9b5c5; font: 7px var(--pixel); cursor: pointer; }
-.rarity-filter:hover { border-color: #71839b; color: var(--ink); }
-.rarity-filter[aria-pressed="true"] { border-color: #dce6f1; background: #26354a; color: var(--ink); box-shadow: inset 0 0 0 1px #53657c; }
-.rarity-filter:focus-visible, .answer-search:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.tier-filters { display: flex; flex-wrap: wrap; gap: 7px; margin: 0 0 12px; }
+.tier-filter { padding: 9px 11px; border: 1px solid #3d4d64; border-radius: 5px; background: #1a2638; color: #a9b5c5; font: 7px var(--pixel); cursor: pointer; }
+.tier-filter[data-tier="dunk"], .answer-tier[data-tier="dunk"], .review-answer[data-tier="dunk"] { --tier-color: var(--tier-dunk); }
+.tier-filter[data-tier="jumpshot"], .answer-tier[data-tier="jumpshot"], .review-answer[data-tier="jumpshot"] { --tier-color: var(--tier-jumpshot); }
+.tier-filter[data-tier="three"], .answer-tier[data-tier="three"], .review-answer[data-tier="three"] { --tier-color: var(--tier-three); }
+.tier-filter[data-tier="half"], .answer-tier[data-tier="half"], .review-answer[data-tier="half"] { --tier-color: var(--tier-half); }
+.tier-filter[data-tier], .answer-tier[data-tier], .review-answer[data-tier] { color: var(--tier-color); }
+.tier-filter:hover { border-color: #71839b; color: var(--tier-color, var(--ink)); }
+.tier-filter[aria-pressed="true"] { border-color: #dce6f1; background: #26354a; color: var(--ink); box-shadow: inset 0 0 0 1px #53657c; }
+.tier-filter[aria-pressed="true"][data-tier] { border-color: var(--tier-color); color: var(--tier-color); }
+.tier-filter:focus-visible, .answer-search:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 .answer-search { width: 100%; min-height: 46px; margin-bottom: 9px; padding: 0 14px; border: 1px solid #3a4c64; border-radius: 5px; background: #0f1826; color: var(--ink); font-size: 14px; }
 .answer-search::placeholder { color: #7d8ba0; }
 .answer-results { margin: 0; padding: 0; list-style: none; }
 .answer-results li { min-height: 48px; padding: 10px 4px; display: flex; justify-content: space-between; align-items: center; gap: 16px; border-bottom: 1px solid #29374b; color: #e4e8ed; font-weight: 600; }
 .answer-results li:last-child { border-bottom: 0; }
-.answer-rarity { color: #9caec4; font: 7px var(--pixel); text-align: right; white-space: nowrap; }
+.answer-tier { font: 7px var(--pixel); text-align: right; white-space: nowrap; }
 .answer-list-status { margin: 10px 2px 0; color: #8190a4; font-size: 12px; }
 body.is-playing .results-panel { display: none; }
 
@@ -210,6 +223,12 @@ body.is-playing .results-panel { display: none; }
 .result-points { color: var(--yellow); font: 8px var(--pixel); white-space: nowrap; }
 .result-strip.is-good { color: var(--green); }
 .result-strip.is-good .result-icon { color: var(--green); }
+.result-strip.is-good[data-tier="dunk"] { --tier-color: var(--tier-dunk); }
+.result-strip.is-good[data-tier="jumpshot"] { --tier-color: var(--tier-jumpshot); }
+.result-strip.is-good[data-tier="three"] { --tier-color: var(--tier-three); }
+.result-strip.is-good[data-tier="half"] { --tier-color: var(--tier-half); }
+.result-strip.is-good[data-tier] { color: var(--tier-color); }
+.result-strip.is-good[data-tier] .result-icon, .result-strip.is-good[data-tier] .result-points { color: var(--tier-color); }
 .result-strip.is-miss { color: #ff958b; }
 .result-strip.is-miss .result-icon { color: #ff7163; }
 .result-strip.is-corrected .result-message::after { content: " · SPELLING FIXED"; color: #a6cfff; font: 7px var(--pixel); }
@@ -284,11 +303,11 @@ body.red-fast-break .play-call { opacity: 1; transform: translateX(-50%); color:
   .review-prompt { font-size: 13px; }
   .review-answer { font-size: 6px; }
   .answer-browser { padding: 0 13px 15px; }
-  .rarity-filters { gap: 5px; }
-  .rarity-filter { padding: 8px 7px; font-size: 5px; }
+  .tier-filters { gap: 5px; }
+  .tier-filter { padding: 8px 7px; font-size: 5px; }
   .answer-search { min-height: 42px; font-size: 13px; }
   .answer-results li { min-height: 42px; font-size: 13px; }
-  .answer-rarity { font-size: 5px; }
+  .answer-tier { font-size: 5px; }
   .play-meta { min-height: 54px; padding: 5px 7px; }
   .meta-kicker { font-size: 6px; }
   .question-count { gap: 3px; display: block; }
