@@ -66,38 +66,93 @@ button { color: inherit; }
 .rim { position: absolute; z-index: 2; right: 35%; top: 15%; width: 46%; height: clamp(7px, 1.5vw, 15px); transform: translateY(-50%); border: 3px solid #f5964b; border-radius: 50%; box-shadow: 0 -1px #fff0ae, 0 2px #853e27; }
 .net { position: absolute; top: 55%; left: -1px; right: -1px; height: 14px; transform-origin: top; clip-path: polygon(0 0, 100% 0, 75% 100%, 25% 100%); background: repeating-linear-gradient(60deg, #fff1d5 0 1px, transparent 1px 4px), repeating-linear-gradient(-60deg, #fff1d5 0 1px, transparent 1px 4px); }
 .shot-ball { position: absolute; z-index: 7; width: 12px; height: 12px; border: 2px solid #784326; border-radius: 50%; background: #e88536; box-shadow: inset 2px 1px #ffc071; transform: translate(-50%, -50%); }
-.court-sprite { position: absolute; z-index: 5; width: 34px; height: 58px; transform: translate(-50%, -50%); image-rendering: pixelated; filter: drop-shadow(4px 5px 0 rgba(49,34,24,.3)); }
-.sprite-blue { --jersey: #276fe0; --trim: #99d5ff; }
-.court-sprite { --skin: #9a5c40; --hair: #241f24; }
-.blue-two, .red-three { --skin: #dbab78; --hair: #563528; }
-.blue-three, .red-one { --skin: #744633; }
-.sprite-red { --jersey: #b6383b; --trim: #ffb3a0; }
+.court-sprite {
+  --sprite-ink: #222036;
+  --skin: #b77950;
+  --hair: #292031;
+  --hairline: 7px;
+  --skin-shadow: color-mix(in srgb, var(--skin), #50283a 36%);
+  position: absolute;
+  z-index: 5;
+  width: 34px;
+  height: 58px;
+  transform: translate(-50%, -50%) scale(var(--player-scale, 1)) scaleX(var(--facing, 1));
+}
+.sprite-blue { --jersey: #2866c4; --jersey-dark: #183f81; --trim: #83c7ff; }
+.sprite-red { --jersey: #bd3e49; --jersey-dark: #792841; --trim: #ff9f92; --facing: -1; }
+.blue-two, .red-three { --skin: #e6af81; --hair: #774733; --hairline: 6px; }
+.blue-three, .red-one { --skin: #905a43; --hairline: 9px; }
+.blue-four, .red-two { --hairline: 4px; }
 .blue-one { left: 60%; top: 43%; z-index: 6; }
-.blue-two { left: 68%; top: 20%; transform: translate(-50%, -50%) scale(.85); }
-.blue-three { left: 88%; top: 9%; transform: translate(-50%, -50%) scale(.82); }
-.blue-four { left: 70%; top: 75%; transform: translate(-50%, -50%) scale(.9); }
-.blue-five { left: 85%; top: 51%; --skin: #b67e58; }
+.blue-two { left: 68%; top: 20%; --player-scale: .85; }
+.blue-three { left: 88%; top: 9%; --player-scale: .82; }
+.blue-four { left: 70%; top: 75%; --player-scale: .9; }
+.blue-five { left: 85%; top: 51%; --skin: #ca895e; }
 .red-one { left: 70%; top: 42%; }
-.red-two { left: 78%; top: 27%; transform: translate(-50%, -50%) scale(.9); }
-.red-three { left: 91%; top: 23%; transform: translate(-50%, -50%) scale(.78); }
-.red-four { left: 79%; top: 66%; transform: translate(-50%, -50%) scale(.82); }
-.red-five { left: 93%; top: 54%; transform: translate(-50%, -50%) scale(.85); --skin: #c49267; --hair: #58382b; }
-.sprite-head { position: absolute; width: 20px; height: 17px; left: 7px; top: 1px; background: var(--skin); border: 2px solid #2a2730; box-shadow: inset 0 -3px #754633, 4px 4px 0 #36292a; }
-.sprite-head::before { content: ""; position: absolute; left: -2px; top: -5px; width: 17px; height: 7px; background: var(--hair); box-shadow: 5px 3px 0 var(--hair), -2px 6px 0 var(--hair); }
-.sprite-head::after { content: ""; position: absolute; left: 11px; top: 6px; width: 3px; height: 3px; background: #201f25; box-shadow: 5px 3px 0 #e5b98e; }
-.sprite-body { position: absolute; left: 4px; top: 18px; width: 26px; height: 20px; background: var(--jersey); border: 3px solid #282d39; box-shadow: inset 0 -4px var(--trim); }
-.sprite-body::before { content: ""; position: absolute; right: -9px; top: 1px; width: 7px; height: 17px; background: var(--skin); border: 2px solid #282d39; transform: rotate(-12deg); }
-.sprite-body::after { content: ""; position: absolute; left: 8px; top: 1px; height: 13px; width: 3px; background: var(--trim); }
-.sprite-arm { position: absolute; left: -3px; top: 22px; width: 9px; height: 21px; background: #a26548; border: 2px solid #292b35; transform: rotate(16deg); }
-.sprite-legs { position: absolute; left: 8px; top: 36px; width: 8px; height: 18px; background: #303543; box-shadow: 11px 3px 0 -1px #303543, -2px 16px 0 -1px #e8dfcd, 9px 19px 0 -1px #e8dfcd; }
-.sprite-legs::before { content: ""; position: absolute; left: -4px; top: -5px; width: 19px; height: 9px; background: var(--jersey); border: 2px solid #282d39; }
-.sprite-shadow { position: absolute; left: 1px; bottom: -14px; width: 32px; height: 10px; border-radius: 50%; background: #5a4836a3; }
-.blue-one .sprite-shadow::before { content: ""; position: absolute; left: -5px; top: -8px; width: 38px; height: 18px; border: 4px solid #f8f1da; border-bottom-color: #38d47c; border-radius: 50%; }
-.sprite-ball { display: none; position: absolute; right: -5px; top: 32px; z-index: 2; width: 12px; height: 12px; border-radius: 50%; background: #dc7b35; border: 2px solid #754628; box-shadow: inset 3px 0 0 #f2ae67; }
+.red-two { left: 78%; top: 27%; --player-scale: .9; }
+.red-three { left: 91%; top: 23%; --player-scale: .78; }
+.red-four { left: 79%; top: 66%; --player-scale: .82; }
+.red-five { left: 93%; top: 54%; --player-scale: .85; --skin: #ca895e; --hair: #58382b; }
+
+/* Keep the limbs separate so the same silhouettes work in every shot pose. */
+.sprite-head {
+  position: absolute; z-index: 4; left: 8px; top: 1px; width: 21px; height: 21px;
+  background: var(--sprite-ink);
+  clip-path: polygon(4px 0, 16px 0, 16px 2px, 19px 2px, 19px 8px, 21px 8px, 21px 16px, 18px 16px, 18px 19px, 14px 19px, 14px 21px, 6px 21px, 6px 18px, 2px 18px, 2px 14px, 0 14px, 0 5px, 4px 5px);
+}
+.sprite-head::before {
+  content: ""; position: absolute; inset: 2px;
+  background: linear-gradient(90deg, var(--skin-shadow) 4px, var(--skin) 4px);
+  box-shadow: inset 0 -3px var(--skin-shadow);
+}
+.sprite-head::after {
+  content: ""; position: absolute; inset: 2px;
+  background:
+    linear-gradient(var(--sprite-ink) 0 0) 13px 7px / 3px 3px,
+    linear-gradient(#f6e3ce 0 0) 11px 7px / 3px 2px,
+    linear-gradient(var(--skin-shadow) 0 0) 12px 13px / 6px 2px,
+    linear-gradient(var(--hair) 0 0) top / 100% 5px,
+    linear-gradient(var(--hair) 0 0) 0 4px / var(--hairline) 9px;
+  background-repeat: no-repeat;
+}
+.sprite-body {
+  position: absolute; z-index: 3; left: 5px; top: 19px; width: 24px; height: 19px;
+  background: var(--sprite-ink);
+  clip-path: polygon(4px 0, 19px 0, 19px 2px, 24px 2px, 24px 7px, 21px 7px, 21px 19px, 2px 19px, 2px 7px, 0 7px, 0 2px, 4px 2px);
+}
+.sprite-body::before {
+  content: ""; position: absolute; inset: 2px;
+  background: linear-gradient(90deg, var(--jersey-dark) 0 5px, var(--jersey) 5px 16px, var(--jersey-dark) 16px);
+  box-shadow: inset 0 2px var(--trim), inset 0 -2px var(--jersey-dark);
+}
+.sprite-body::after {
+  content: ""; position: absolute; left: 12px; top: 7px; width: 5px; height: 6px;
+  background: linear-gradient(90deg, #f6e6d4 2px, transparent 2px 3px, #f6e6d4 3px);
+}
+.sprite-arm, .sprite-arm-back {
+  position: absolute; top: 21px; width: 9px; height: 18px;
+  border: 2px solid var(--sprite-ink);
+  border-radius: 2px;
+  background: linear-gradient(var(--skin) 0 11px, #f1dfc9 11px 13px, var(--skin) 13px);
+  box-shadow: inset -2px 0 var(--skin-shadow);
+  transform-origin: 50% 2px;
+}
+.sprite-arm { z-index: 4; right: 0; transform: rotate(-37deg); }
+.sprite-arm-back { z-index: 1; left: 3px; transform: rotate(29deg); background: var(--skin-shadow); }
+.sprite-red .sprite-arm { transform: rotate(-55deg); }
+.blue-one .sprite-arm { right: -1px; transform: rotate(-16deg); }
+.sprite-legs { position: absolute; z-index: 2; left: 6px; top: 34px; width: 23px; height: 23px; transform-origin: top; }
+.sprite-legs::before, .sprite-legs::after {
+  content: ""; position: absolute; width: 11px; height: 22px; border: 2px solid var(--sprite-ink);
+  clip-path: polygon(0 0, 8px 0, 8px 16px, 11px 16px, 11px 100%, 0 100%);
+  background: linear-gradient(var(--jersey-dark) 0 6px, var(--skin) 6px 12px, #deeff2 12px 15px, #fbecd4 15px);
+}
+.sprite-legs::before { left: 0; top: 0; transform: rotate(12deg); filter: brightness(.83); }
+.sprite-legs::after { left: 12px; top: 2px; transform: rotate(-8deg); }
+.sprite-shadow { position: absolute; left: 0; bottom: -5px; width: 34px; height: 10px; border-radius: 50%; background: #32242455; }
+.blue-one .sprite-shadow::before { content: ""; position: absolute; inset: -4px; border: 2px solid #f8f1da; border-bottom: 3px solid #38d47c; border-radius: 50%; }
+.sprite-ball { display: none; position: absolute; right: -5px; top: 32px; z-index: 5; width: 12px; height: 12px; border-radius: 50%; background: #dc7b35; border: 2px solid #754628; box-shadow: inset 3px 0 0 #f2ae67; }
 .blue-one .sprite-ball { display: block; }
-.blue-one .sprite-arm { left: auto; right: -4px; z-index: 2; transform-origin: 50% 2px; transform: rotate(-16deg); }
-.blue-one .sprite-body::before { left: -9px; right: auto; }
-.blue-one .sprite-legs, .sprite-red .sprite-legs { transform-origin: top; }
 .play-call { position: absolute; top: 17%; left: 50%; z-index: 10; transform: translate(-50%, -10px) scale(.9); opacity: 0; padding: 11px 16px; border: 3px solid #fff0c9; border-radius: 4px; background: #12223b; color: var(--yellow); font: 12px var(--pixel); text-align: center; text-shadow: 2px 2px #57401d; box-shadow: 0 5px 0 #111a28; white-space: nowrap; }
 .arena-topline, .arena-bottomline { text-transform: uppercase; }
 .arena-bottomline { flex-basis: 28px; height: 28px; background: #087447; color: #d9ebd7; }
