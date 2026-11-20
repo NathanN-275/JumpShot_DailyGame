@@ -533,7 +533,7 @@ async function resolveQuestion(match) {
   const finish = !tier && Math.random() >= .5 ? RED_FINISHES[Math.floor(Math.random() * RED_FINISHES.length)] : null;
   if (tier) score += tier.points;
   if (finish) redScore += finish.points;
-  runAnswers[questionIndex] = match?.name ?? null;
+  runAnswers[questionIndex] = match ? [match.name, match.tier] : null;
   saveDaily(questionIndex + 1, null);
   if (match) {
     await playCourtShot(match.tier);
@@ -593,11 +593,11 @@ function renderRunResults() {
     prompt.className = "review-prompt";
     prompt.textContent = `${String(index + 1).padStart(2, "0")} · ${question.prompt}`;
     const accepted = document.createElement("span");
-    const answer = runAnswers[index];
+    const recorded = runAnswers[index];
+    const [answer, awardedTier] = Array.isArray(recorded) ? recorded : [recorded];
     accepted.className = answer === null ? "review-answer is-unanswered" : answer === false ? "review-answer is-unavailable" : "review-answer";
     accepted.textContent = typeof answer === "string" ? `YOUR ANSWER · ${answer}` : answer === null ? "NO ANSWER" : "ANSWER NOT RECORDED";
-    const acceptedEntry = question.answers.find(([name]) => name === answer);
-    if (acceptedEntry) accepted.dataset.tier = acceptedEntry[1];
+    if (awardedTier) accepted.dataset.tier = awardedTier;
     summary.append(prompt, accepted);
     details.append(summary);
 
@@ -750,7 +750,18 @@ function startRun(day) {
   const savedQuestions = saved?.prompts?.map((prompt) => questionsByPrompt.get(prompt));
   runQuestions = savedQuestions?.length === RUN_LENGTH && savedQuestions.every(Boolean) ? savedQuestions : dailyQuestions(gameDay);
   runAnswers = Array.isArray(saved?.answers) && saved.answers.length === RUN_LENGTH
-    ? saved.answers.map((answer) => typeof answer === "string" ? answer : answer === false ? false : null)
+    ? saved.answers.map((answer, index) => {
+      if (Array.isArray(answer) && typeof answer[0] === "string") {
+        return [answer[0], Object.hasOwn(TIERS, answer[1]) ? answer[1] : null];
+      }
+      if (typeof answer !== "string") return answer === false ? false : null;
+      const question = runQuestions[index];
+      // Old saves only stored the name. Name prompts used the original directory tier.
+      const tier = question.category
+        ? question.answers.find(([name]) => name === answer)?.[1]
+        : directoryTiers.get(letterKey(answer));
+      return [answer, tier ?? null];
+    })
     : Array(RUN_LENGTH).fill(saved?.index > 0 ? false : null);
   questionIndex = saved?.index ?? 0;
   score = saved?.score ?? 0;

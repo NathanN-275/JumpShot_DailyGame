@@ -30,4 +30,4 @@ The answer bank uses these NBA history and statistics references:
 - [NBA Cup champions and MVPs](https://www.nba.com/news/history-emirates-nba-cup-winners-index)
 - [Player directory snapshot from nba_api](https://github.com/swar/nba_api/blob/master/src/nba_api/stats/library/data.py), dated October 21, 2026. Jumpshot keeps names and active status for the letter prompts.
 
-Tier choices are game values. Letter prompts use curated headliner and familiar-name tiers, with active status as the fallback for other players. Historical prompts use curated lists or filter the career three-point totals. Year ranges for season awards and Finals refer to the calendar year the season ended.
+Tier choices are game values. Player-name prompts keep curated headliners at Dunk and familiar names at Jumpshot. The remaining names are ranked by active status, career threes, and a stable tie break. Each prompt caps Half Court at 10% of its answers and splits the middle tiers roughly evenly. Historical prompts use curated lists or filter the career three-point totals. Year ranges for season awards and Finals refer to the calendar year the season ended.
