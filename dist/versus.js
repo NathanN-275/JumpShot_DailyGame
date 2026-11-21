@@ -6,10 +6,19 @@ let socket = null;
 let poll = null;
 let clock = null;
 let state = null;
+let serverOffset = 0;
+let reconnectUntil = 0;
 let lastReveal = -1;
 let lastRoundMotion = -1;
 const form = $('#versus-form');
 const input = $('#versus-answer');
+const sessionKey = 'jumpshot-versus-match';
+function saveSession() {
+  try { sessionStorage.setItem(sessionKey, JSON.stringify({ ticket, matchId })); } catch { /* Browser storage may be disabled. */ }
+}
+function clearSession() {
+  try { sessionStorage.removeItem(sessionKey); } catch { /* Browser storage may be disabled. */ }
+}
 function setStatus(text) { $('#match-info').textContent = text; }
 function setSearching(active) {
   $('#find-match').classList.toggle('hidden', active);
@@ -44,6 +53,8 @@ async function cancelQueue() {
 }
 function connect(id) {
   clearInterval(poll); matchId = id; setSearching(false);
+  if (!reconnectUntil) reconnectUntil = Date.now() + 15000;
+  saveSession();
   const url = new URL(`${api}/api/match/${id}`);
   url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
   url.searchParams.set('ticket', ticket);
@@ -51,11 +62,12 @@ function connect(id) {
   socket.onmessage = event => {
     const data = JSON.parse(event.data);
     if (data.error) { setStatus(data.error); return; }
-    state = data; render();
+    state = data; serverOffset = data.serverNow - Date.now(); reconnectUntil = Date.now() + 15000; render();
   };
   socket.onclose = () => {
     if (state?.phase === 'done') return;
     setStatus('Reconnecting…');
+    if (Date.now() >= reconnectUntil) { clearSession(); matchId = null; setStatus('Match connection ended. Find a new match.'); $('#find-match').classList.remove('hidden'); return; }
     setTimeout(() => { if (matchId) connect(matchId); }, 1000);
   };
   socket.onerror = () => setStatus('Connection interrupted.');
@@ -63,7 +75,7 @@ function connect(id) {
 }
 function updateClock() {
   if (!state) return;
-  $('#clock').textContent = state.deadline ? String(Math.max(0, Math.ceil((state.deadline - Date.now()) / 1000))).padStart(2, '0') : '00';
+  $('#clock').textContent = state.deadline ? String(Math.max(0, Math.ceil((state.deadline - Date.now() - serverOffset) / 1000))).padStart(2, '0') : '00';
 }
 function render() {
   const { seat, bot, phase, round, answers, submitted, scores, stealSeat, steal, winner } = state;
@@ -91,7 +103,7 @@ function render() {
       else if (answers[1]) playRedFastBreak(RED_FINISHES[1]).catch(() => {});
     }
   } else if (phase !== 'done') $('#reveal').textContent = '';
-  if (phase === 'done') { setStatus('Final score'); $('#find-match').textContent = 'PLAY AGAIN'; $('#find-match').classList.remove('hidden'); matchId = null; ticket = null; socket?.close(); }
+  if (phase === 'done') { setStatus('Final score'); $('#find-match').textContent = 'PLAY AGAIN'; $('#find-match').classList.remove('hidden'); clearSession(); matchId = null; ticket = null; socket?.close(); }
   updateClock();
 }
 form.addEventListener('submit', event => {
@@ -102,3 +114,7 @@ form.addEventListener('submit', event => {
 });
 $('#find-match').addEventListener('click', startQueue);
 $('#cancel-search').addEventListener('click', cancelQueue);
+try {
+  const saved = JSON.parse(sessionStorage.getItem(sessionKey) || 'null');
+  if (saved?.ticket && saved?.matchId) { ticket = saved.ticket; connect(saved.matchId); }
+} catch { clearSession(); }

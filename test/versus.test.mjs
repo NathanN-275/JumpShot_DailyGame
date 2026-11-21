@@ -43,3 +43,18 @@ test('one waiting player automatically gets a bot after ten seconds', async () =
   const status = await (await queue.fetch(new Request(`https://queue/status?ticket=${joined.ticket}`))).json();
   assert.equal(status.match, created[0]);
 });
+
+test('an abandoned search cannot take a new human opponent after ten seconds', async () => {
+  const ctx = context();
+  const created = [];
+  const queue = new Queue(ctx, { MATCH: { getByName: id => ({ fetch: async (_url, options) => { created.push({ id, body: JSON.parse(options.body) }); return new Response('ok'); } }) } });
+  const old = await (await queue.fetch(new Request('https://queue/join', { method: 'POST' }))).json();
+  const entries = await ctx.storage.get('entries');
+  entries[old.ticket].at -= 10001;
+  await ctx.storage.put('entries', entries);
+  const fresh = await (await queue.fetch(new Request('https://queue/join', { method: 'POST' }))).json();
+  assert.equal(fresh.match, undefined);
+  assert.equal(created.length, 1);
+  assert.equal(created[0].body.bot, true);
+  assert.equal((await ctx.storage.get('entries'))[old.ticket].match, created[0].id);
+});

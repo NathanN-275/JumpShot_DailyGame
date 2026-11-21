@@ -30,7 +30,7 @@ function publicState(state, seat) {
   const q = all[state.deck[state.round]];
   const reveal = state.phase === 'reveal' || state.phase === 'done';
   return {
-    matchId: state.id, seat, bot: state.bot, phase: state.phase, round: state.round,
+    matchId: state.id, seat, bot: state.bot, phase: state.phase, round: state.round, serverNow: Date.now(),
     deadline: state.deadline, scores: state.scores, prompt: q?.prompt, hint: q?.hint,
     team: !!q?.team, submitted: state.answers.map(Boolean),
     answers: state.answers.map((a, i) => reveal || i === seat ? a : state.phase === 'counter' ? a && { tier: a.tier, points: a.points } : null),
@@ -150,6 +150,11 @@ export class Queue {
     let entries = await this.ctx.storage.get('entries') || {};
     const url = new URL(request.url);
     if (request.method === 'POST' && url.pathname === '/join') {
+      const now = Date.now();
+      entries = Object.fromEntries(Object.entries(entries).filter(([, entry]) => now - entry.at < 86400000));
+      const expired = queue.filter(item => entries[item] && now - entries[item].at >= 10000);
+      queue = queue.filter(item => entries[item] && now - entries[item].at < 10000);
+      for (const oldTicket of expired) entries[oldTicket].match = await this.start([oldTicket, null], true);
       const ticket = crypto.randomUUID();
       const other = queue.shift();
       if (other) {
