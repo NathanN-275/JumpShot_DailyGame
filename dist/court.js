@@ -118,6 +118,24 @@ function retreatBlueDefenders(space, ballX, ballY, duration, count) {
   });
 }
 
+async function playGiveAndGo(space, passer, ball, receiver, direction) {
+  const start = space.center(ball);
+  const origin = space.center(passer);
+  const wing = space.center(receiver);
+  const catchPoint = { x: wing.x + direction * 12, y: wing.y + 12 };
+  const held = animateCourtPiece(ball, [{ opacity: 0 }], { duration: 1, fill: "forwards" });
+  flightBall.hidden = false;
+  const cut = movePlayer(passer, space,
+    Math.min(space.width * .92, Math.max(space.width * .08, origin.x + direction * space.width * .05)),
+    origin.y + space.height * .035, 235);
+  const pass = (from, to, duration) => animateCourtPiece(flightBall,
+    shotArc(space.position, from, to, 10), { duration, fill: "forwards" }).finished;
+  await Promise.all([cut.finished, pass(start, catchPoint, 210)]);
+  await pass(catchPoint, space.center(ball), 220);
+  flightBall.hidden = true;
+  held.cancel();
+}
+
 function reactToBlueShot(tier, space, plantX, plantY, motion) {
   if (tier === "dunk") {
     movePlayer(court.querySelector(".blue-five"), space, space.width * .87, space.height * .74, 490);
@@ -139,19 +157,20 @@ function reactToBlueShot(tier, space, plantX, plantY, motion) {
   });
 }
 
-async function playCourtShot(tier, { miss = false } = {}) {
+async function playCourtShot(tier, { miss = false, pass = false, laneShift = 0 } = {}) {
   court.classList.remove("is-blue-defending");
   if (!canAnimateCourt()) return;
 
   const motion = SHOT_MOTION[tier];
   const space = courtSpace();
+  if (pass) await playGiveAndGo(space, shooter, heldBall, court.querySelector(".blue-two"), 1);
   const player = shooter.getBoundingClientRect();
   const rim = scoringRim.getBoundingClientRect();
   const scale = player.height / shooter.offsetHeight;
   const { x: basketX, y: basketY } = space.center(scoringRim);
   const dunk = tier === "dunk";
   const plantX = dunk ? basketX - 29 * scale : space.width * motion.x;
-  const plantY = dunk ? basketY + 54 * scale : space.height * motion.y;
+  const plantY = dunk ? basketY + 54 * scale : space.height * (motion.y + laneShift);
   const jumpX = plantX + (dunk ? 9 * scale : 0);
   const jumpY = plantY - motion.lift * scale;
   const { position } = space;
@@ -216,7 +235,7 @@ async function playCourtShot(tier, { miss = false } = {}) {
   flightBall.hidden = true;
 }
 
-async function playRedFastBreak(finish, { defenderCount, miss = false } = {}) {
+async function playRedFastBreak(finish, { defenderCount, miss = false, pass = false, laneShift = 0 } = {}) {
   if (!canAnimateCourt()) {
     court.classList.add("is-blue-defending");
     return;
@@ -229,11 +248,11 @@ async function playRedFastBreak(finish, { defenderCount, miss = false } = {}) {
   const steal = redHasBall ? null : center(heldBall);
   const basket = center(redRim);
   const handOffset = 18 * scale;
-  const pickup = redHasBall ? center(redRunner) : { x: steal.x + handOffset, y: steal.y - 8 * scale };
+  let pickup = redHasBall ? center(redRunner) : { x: steal.x + handOffset, y: steal.y - 8 * scale };
   const layup = finish.x === undefined;
   const drive = layup
     ? { x: basket.x + 34 * scale, y: basket.y + 48 * scale }
-    : { x: space.width * finish.x, y: space.height * finish.y };
+    : { x: space.width * finish.x, y: space.height * (finish.y + laneShift) };
   const jump = { x: drive.x - (layup ? 14 * scale : 0), y: drive.y - 30 * scale };
   const runnerAt = ({ x, y }) => position(x, y);
 
@@ -242,6 +261,10 @@ async function playRedFastBreak(finish, { defenderCount, miss = false } = {}) {
     await movePlayer(redRunner, space, pickup.x, pickup.y, 310).finished;
   }
   court.classList.add("is-blue-defending");
+  if (pass && redHeldBall) {
+    await playGiveAndGo(space, redRunner, redHeldBall, redWing, -1);
+    pickup = center(redRunner);
+  }
   animateCourtPiece(redHeldBall ?? heldBall, [{ opacity: 0 }], { duration: 1, fill: "forwards" });
   flightBall.hidden = false;
 

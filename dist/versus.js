@@ -39,6 +39,8 @@ function removeQueueTicket(cancelledTicket) {
 async function startQueue() {
   const currentSearch = ++searchId;
   state = null;
+  resetCourtShot();
+  court.classList.add('is-versus-idle', 'is-versus-dribbling');
   lastReveal = -1; lastRoundMotion = -1; lastPreparedRound = -1; lastReviewMatch = null;
   $('#versus-final-score').classList.add('hidden');
   $('#versus-results').classList.add('hidden');
@@ -215,7 +217,13 @@ function render() {
   form.classList.toggle('hidden', !canAnswer);
   $('.versus-actions').classList.toggle('hidden', phase !== 'done');
   $('#match-info').classList.toggle('is-steal', phase === 'counter');
-  if (phase === 'answer' && lastPreparedRound !== round) { lastPreparedRound = round; resetCourtShot(); }
+  if (phase === 'answer' && lastPreparedRound !== round) {
+    lastPreparedRound = round;
+    resetCourtShot();
+    court.classList.toggle('is-blue-defending', seat === 1);
+  }
+  court.classList.toggle('is-versus-idle', phase === 'answer' && !submitted[seat]);
+  court.classList.toggle('is-versus-dribbling', phase === 'answer');
   if (phase === 'answer') setStatus(submitted[seat] ? 'Answer locked. Waiting for the other player and the shot clock.' : 'Submit one valid answer before the clock expires.');
   if (phase === 'answer' && submitted[seat] && lastRoundMotion !== round) { lastRoundMotion = round; animateVersusTeams(seat, defenderCount); }
   if (phase === 'counter') setStatus(stealSeat === seat ? `Beat their ${answers[1 - seat]?.points || 0}-point tier before the clock expires.` : 'Your opponent has a chance to steal.');
@@ -227,9 +235,11 @@ function render() {
     if (lastReveal !== round) {
       lastReveal = round;
       const shooterSeat = answers[0]?.points >= (answers[1]?.points || 0) ? 0 : 1;
-      if (shooterSeat === 0 && answers[0]) playCourtShot(answers[0].tier, { miss: !!steal && stealSeat === 1 }).catch(() => {});
-      else if (answers[1]) {
-        playRedFastBreak(VERSUS_RED_FINISHES[answers[1].tier], { defenderCount, miss: !!steal && stealSeat === 0 }).catch(() => {});
+      const shot = { pass: !steal && (round + shooterSeat) % 3 === 1, laneShift: [0, -.12, .10][round % 3] };
+      if (shooterSeat === 0 && answers[0]) {
+        playCourtShot(answers[0].tier, { ...shot, miss: !!steal && stealSeat === 1 }).catch(() => {});
+      } else if (answers[1]) {
+        playRedFastBreak(VERSUS_RED_FINISHES[answers[1].tier], { ...shot, defenderCount, miss: !!steal && stealSeat === 0 }).catch(() => {});
       }
     }
   } else reveal.textContent = '';

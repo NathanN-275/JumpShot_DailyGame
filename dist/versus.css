@@ -27,6 +27,29 @@
 .versus-mode .sprite-red { --facing: -1; }
 .versus-mode .is-blue-defending .blue-one .sprite-ball { visibility: hidden; }
 .versus-mode .is-blue-defending .red-one .sprite-ball { display: block; }
+@media (prefers-reduced-motion: no-preference) {
+  .is-versus-idle :is(.sprite-blue, .sprite-red) {
+    animation: versus-footwork 1.8s ease-in-out infinite alternate;
+  }
+  .is-versus-idle .sprite-red { --shuffle-x: -6px; animation-delay: -.4s; }
+  .is-versus-idle :is(.blue-two, .blue-four, .red-two, .red-four) { --shuffle-x: 3px; animation-delay: -.9s; }
+  .is-versus-idle :is(.blue-three, .blue-five, .red-three, .red-five) { --shuffle-x: -4px; animation-delay: -1.4s; }
+  .is-versus-idle :is(.sprite-blue, .sprite-red) .sprite-legs { animation: versus-idle-steps .47s ease-in-out infinite alternate; }
+  .is-versus-dribbling .sprite-ball { animation: versus-dribble .52s infinite; }
+}
+@keyframes versus-footwork {
+  0% { translate: 0 0; }
+  45% { translate: var(--shuffle-x, 6px) -3px; }
+  100% { translate: calc(var(--shuffle-x, 6px) * -.5) 4px; }
+}
+@keyframes versus-idle-steps {
+  from { rotate: -6deg; }
+  to { rotate: 6deg; }
+}
+@keyframes versus-dribble {
+  0%, 100% { translate: 0 0; animation-timing-function: cubic-bezier(.55, .05, .77, .46); }
+  50% { translate: 1px 18px; animation-timing-function: cubic-bezier(.22, .58, .52, 1); }
+}
 @media (max-width: 620px) {
   .versus-mode .topbar { grid-template-columns: 1fr; height: auto; }
   .versus-mode .scorebug { grid-column: 1; }
