@@ -202,6 +202,7 @@ async function loadReview(id, ticket, seat) {
 }
 function render() {
   const { seat, bot, phase, round, answers, submitted, scores, stealSeat, steal, winner } = state;
+  const defenderCount = 1 + round % 3;
   $('#blue-name').textContent = seat === 0 ? 'YOU' : 'OPPONENT';
   $('#red-name').textContent = seat === 1 ? 'YOU' : 'OPPONENT';
   $('#blue-score').textContent = String(scores[0]).padStart(3, '0');
@@ -216,7 +217,7 @@ function render() {
   $('#match-info').classList.toggle('is-steal', phase === 'counter');
   if (phase === 'answer' && lastPreparedRound !== round) { lastPreparedRound = round; resetCourtShot(); }
   if (phase === 'answer') setStatus(submitted[seat] ? 'Answer locked. Waiting for the other player and the shot clock.' : 'Submit one valid answer before the clock expires.');
-  if (phase === 'answer' && submitted[seat] && lastRoundMotion !== round) { lastRoundMotion = round; animateVersusTeams(seat); }
+  if (phase === 'answer' && submitted[seat] && lastRoundMotion !== round) { lastRoundMotion = round; animateVersusTeams(seat, defenderCount); }
   if (phase === 'counter') setStatus(stealSeat === seat ? `Beat their ${answers[1 - seat]?.points || 0}-point tier before the clock expires.` : 'Your opponent has a chance to steal.');
   reveal.classList.toggle('hidden', phase !== 'reveal');
   if (phase === 'reveal') {
@@ -227,7 +228,9 @@ function render() {
       lastReveal = round;
       const shooterSeat = answers[0]?.points >= (answers[1]?.points || 0) ? 0 : 1;
       if (shooterSeat === 0 && answers[0]) playCourtShot(answers[0].tier, { miss: !!steal && stealSeat === 1 }).catch(() => {});
-      else if (answers[1]) playRedFastBreak(RED_FINISHES[1]).catch(() => {});
+      else if (answers[1]) {
+        playRedFastBreak(VERSUS_RED_FINISHES[answers[1].tier], { defenderCount, miss: !!steal && stealSeat === 0 }).catch(() => {});
+      }
     }
   } else reveal.textContent = '';
   if (phase === 'done') { setStatus('Final score'); renderFinalScore(scores, seat); loadReview(matchId, ticket, seat); $('#find-match').textContent = 'PLAY AGAIN'; clearSession(); matchId = null; ticket = null; socket?.close(); }

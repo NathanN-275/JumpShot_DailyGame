@@ -11,6 +11,19 @@ const RED_FINISHES = [
   { label: "THREE POINTER", points: 3, x: .39, y: .55, flight: 650, arc: .22 },
 ];
 
+const VERSUS_RED_FINISHES = {
+  dunk: RED_FINISHES[0],
+  jumpshot: RED_FINISHES[1],
+  three: RED_FINISHES[2],
+  half: { x: .48, y: .43, flight: 850, arc: .32 },
+};
+
+const BLUE_RETREAT_LANES = [
+  { player: ".blue-one", behind: .07, lane: .06 },
+  { player: ".blue-four", behind: .13, lane: .19 },
+  { player: ".blue-two", behind: .11, lane: -.18 },
+];
+
 const BLUE_SPACING = {
   jumpshot: { player: ".blue-two", x: .73, y: .15 },
   three: { player: ".blue-four", x: .73, y: .78 },
@@ -94,6 +107,14 @@ function movePlayer(player, space, x, y, duration) {
   swingLegs(player, duration);
   return animateCourtPiece(player, [space.position(start.x, start.y), space.position(x, y)], {
     duration, easing: "ease-out", fill: "forwards",
+  });
+}
+
+function retreatBlueDefenders(space, ballX, ballY, duration, count) {
+  BLUE_RETREAT_LANES.slice(0, count).forEach(({ player, behind, lane }, index) => {
+    movePlayer(court.querySelector(player), space,
+      ballX + Math.max(26, space.width * behind), ballY + space.height * lane,
+      duration + index * 90);
   });
 }
 
@@ -195,7 +216,7 @@ async function playCourtShot(tier, { miss = false } = {}) {
   flightBall.hidden = true;
 }
 
-async function playRedFastBreak(finish) {
+async function playRedFastBreak(finish, { defenderCount, miss = false } = {}) {
   if (!canAnimateCourt()) {
     court.classList.add("is-blue-defending");
     return;
@@ -234,7 +255,11 @@ async function playRedFastBreak(finish) {
   });
   const dribbles = sprintPath.map(({ x, y }, i) => position(x - handOffset, y + (8 + 15 * Math.abs(Math.sin(i * Math.PI / 4))) * scale));
   movePlayer(redWing, space, space.width * .28, space.height * .69, duration);
-  movePlayer(court.querySelector(".blue-four"), space, space.width * .45, space.height * .68, duration + 100);
+  if (defenderCount === undefined) {
+    movePlayer(court.querySelector(".blue-four"), space, space.width * .45, space.height * .68, duration + 100);
+  } else {
+    retreatBlueDefenders(space, drive.x, drive.y, duration, defenderCount);
+  }
   swingLegs(redRunner, duration);
   animateCourtPiece(redRunner, sprintPath.map(runnerAt), { duration, fill: "forwards" });
   await animateCourtPiece(flightBall, dribbles, { duration, fill: "forwards" }).finished;
@@ -247,9 +272,19 @@ async function playRedFastBreak(finish) {
   });
   const release = { x: jump.x - handOffset, y: jump.y - 15 * scale };
   await animateCourtPiece(flightBall, [dribbles.at(-1), runnerAt(release)], { duration: 225, fill: "forwards" }).finished;
-  const arcHeight = Math.min(release.y, basket.y) * finish.arc * 2;
+  const target = miss ? { x: basket.x + 12 * scale, y: basket.y - 5 * scale } : basket;
+  const arcHeight = Math.min(release.y, target.y) * finish.arc * 2;
   cheerCrowd();
-  await animateCourtPiece(flightBall, shotArc(position, release, basket, arcHeight), { duration: finish.flight, fill: "forwards" }).finished;
+  await animateCourtPiece(flightBall, shotArc(position, release, target, arcHeight), { duration: finish.flight, fill: "forwards" }).finished;
+  if (miss) {
+    await animateCourtPiece(flightBall, [
+      runnerAt(target),
+      { ...position(target.x + 22 * scale, target.y - 18 * scale), offset: .4 },
+      { ...position(target.x + 54 * scale, target.y + 46 * scale), opacity: 0 },
+    ], { duration: 380, fill: "forwards" }).finished;
+    flightBall.hidden = true;
+    return;
+  }
   animateCourtPiece(redRim.querySelector(".net"), [{ scale: "1" }, { scale: ".77 1.45" }, { scale: "1" }], {
     duration: 260,
   });
@@ -260,7 +295,7 @@ async function playRedFastBreak(finish) {
   flightBall.hidden = true;
 }
 
-function animateVersusTeams(seat) {
+function animateVersusTeams(seat, defenderCount) {
   court.classList.toggle("is-blue-defending", seat === 1);
   if (!canAnimateCourt()) return;
   const space = courtSpace();
@@ -270,9 +305,10 @@ function animateVersusTeams(seat) {
     movePlayer(court.querySelector('.blue-three'), space, space.width * .66, space.height * .2, 900);
     movePlayer(court.querySelector('.red-three'), space, space.width * .7, space.height * .22, 900);
   } else {
-    movePlayer(redRunner, space, space.width * .46, space.height * .55, 850);
-    movePlayer(shooter, space, space.width * .52, space.height * .57, 850);
+    const ballX = space.width * .46;
+    const ballY = space.height * .55;
+    movePlayer(redRunner, space, ballX, ballY, 850);
     movePlayer(court.querySelector('.red-four'), space, space.width * .35, space.height * .74, 900);
-    movePlayer(court.querySelector('.blue-four'), space, space.width * .4, space.height * .72, 900);
+    retreatBlueDefenders(space, ballX, ballY, 850, defenderCount);
   }
 }
