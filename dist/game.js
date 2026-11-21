@@ -607,15 +607,12 @@ function renderRunResults() {
     filters.className = "tier-filters";
     filters.setAttribute("role", "group");
     filters.setAttribute("aria-label", `Filter answers for question ${index + 1}`);
-    const searchLabel = document.createElement("label");
-    searchLabel.className = "sr-only";
-    searchLabel.textContent = `Search answers for question ${index + 1}`;
     const search = document.createElement("input");
     search.type = "search";
     search.className = "answer-search";
     search.placeholder = "Search answers…";
+    search.setAttribute("aria-label", `Search answers for question ${index + 1}`);
     search.autocomplete = "off";
-    searchLabel.append(search);
     const answerList = document.createElement("ul");
     answerList.className = "answer-results";
     answerList.setAttribute("aria-live", "polite");
@@ -663,7 +660,7 @@ function renderRunResults() {
       filters.append(button);
     }
     search.addEventListener("input", renderAnswers);
-    browser.append(filters, searchLabel, answerList, listStatus);
+    browser.append(filters, search, answerList, listStatus);
     details.append(browser);
     details.addEventListener("toggle", () => {
       if (!details.open) return;
