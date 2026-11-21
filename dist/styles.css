@@ -134,6 +134,8 @@ button { color: inherit; }
 .rules-row { display: flex; justify-content: center; gap: 14px; margin: 0 0 18px; color: #c1cbd8; font: 7px var(--pixel); }
 .rules-row b { display: block; margin-bottom: 5px; color: var(--green); font-size: 12px; }
 .primary-button { width: 100%; min-height: 48px; display: flex; justify-content: center; align-items: center; position: relative; border: 2px solid #ffe49a; border-radius: 4px; background: linear-gradient(#ffd56a, #f3a83c); color: #271b15; font: 10px var(--pixel); cursor: pointer; box-shadow: 0 4px 0 #a7602b, inset 0 1px #fff4c3; transition: transform .12s, filter .12s; }
+.mode-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.mode-actions .primary-button { min-width: 0; padding: 8px; text-decoration: none; line-height: 1.5; }
 .primary-button b { position: absolute; right: 14px; font: 700 20px var(--ui); }
 .primary-button:hover { filter: brightness(1.08); transform: translateY(-2px); }
 .primary-button:active { transform: translateY(2px); box-shadow: 0 2px 0 #a7602b; }
@@ -293,6 +295,8 @@ body.red-fast-break .play-call { opacity: 1; transform: translateX(-50%); color:
   .rules-row { gap: 7px; margin-bottom: 12px; font-size: 5px; }
   .rules-row b { font-size: 10px; }
   .primary-button { min-height: 42px; font-size: 8px; }
+  .mode-actions { gap: 7px; }
+  .mode-actions .primary-button { min-height: 48px; font-size: 6px; }
   .intro-note { margin-top: 9px; font-size: 10px; }
   .results-panel { margin: 0 0 10px; }
   .answer-results { max-height: 48svh; }
@@ -343,3 +347,10 @@ body.red-fast-break .play-call { opacity: 1; transform: translateX(-50%); color:
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; } }
 @media (prefers-reduced-motion: reduce) { body.shot-missed .play-call { animation: none; opacity: 1; transform: translateX(-50%); } }
+@media (max-width: 620px) {
+  .arena { min-height: 0; }
+  .answer-entry { min-height: 48px; height: auto; }
+  .answer-entry input { font-size: 16px; }
+  .answer-entry button { min-height: 48px; }
+  .prompt-copy h2 { line-height: 1.3; }
+}

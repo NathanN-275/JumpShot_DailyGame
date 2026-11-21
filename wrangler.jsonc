@@ -1,0 +1,11 @@
+{
+  "name": "jumpshot-versus",
+  "main": "worker/index.mjs",
+  "compatibility_date": "2026-11-21",
+  "durable_objects": { "bindings": [
+    { "name": "QUEUE", "class_name": "Queue" },
+    { "name": "MATCH", "class_name": "Match" }
+  ] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Queue", "Match"] }],
+  "vars": { "FRONTEND_ORIGIN": "http://localhost:8000" }
+}

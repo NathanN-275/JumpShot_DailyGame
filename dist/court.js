@@ -249,3 +249,16 @@ async function playRedFastBreak(finish) {
   ], { duration: 180, fill: "forwards" }).finished;
   flightBall.hidden = true;
 }
+
+function animateVersusTeams() {
+  if (!canAnimateCourt()) return;
+  resetCourtShot();
+  const space = courtSpace();
+  const lanes = [.34, .22, .55, .76, .64];
+  for (let index = 1; index <= 5; index++) {
+    movePlayer(court.querySelector(`.blue-${['one', 'two', 'three', 'four', 'five'][index - 1]}`), space,
+      space.width * (.57 + index * .064), space.height * lanes[index - 1], 1100 + index * 90);
+    movePlayer(court.querySelector(`.red-${['one', 'two', 'three', 'four', 'five'][index - 1]}`), space,
+      space.width * (.43 - index * .064), space.height * lanes[5 - index], 1100 + index * 90);
+  }
+}

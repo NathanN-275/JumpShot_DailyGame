@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "bank": "node scripts/export-versus-bank.cjs",
+    "dev:worker": "wrangler dev",
+    "deploy:worker": "npm run bank && wrangler deploy"
+  },
+  "devDependencies": { "wrangler": "^4.0.0" }
+}

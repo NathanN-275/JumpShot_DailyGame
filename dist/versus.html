@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#101725"><title>Jumpshot Versus</title>
+<link rel="stylesheet" href="./styles.css"><link rel="stylesheet" href="./versus.css"><script src="./versus-config.js" defer></script><script src="./court.js" defer></script><script src="./versus.js" defer></script></head>
+<body class="versus-mode"><main class="app-shell"><header class="topbar"><a class="brand" href="./index.html"><span class="brand-ball"></span>JUMPSHOT<span class="brand-period">.</span></a><div class="scorebug"><div class="score-side score-blue"><span class="team-mark">B</span><span class="team-label">BLUE <small id="blue-name">YOU</small></span><strong id="blue-score">000</strong></div><div class="score-center"><span>VERSUS</span><b id="period">TIP OFF</b></div><div class="score-side score-red"><span class="team-mark">R</span><span class="team-label">RED <small id="red-name">OPPONENT</small></span><strong id="red-score">000</strong></div></div></header>
+<section class="arena"><div class="stands"><div class="crowd crowd-one"></div><div class="ad-board"><b>VERSUS ARCADE</b></div><div class="crowd crowd-two"></div></div>
+        <div class="court">
+          <div class="court-floor" aria-hidden="true">
+            <div class="half-court-line"></div>
+            <div class="center-circle"><span>JS</span></div>
+            <div class="court-end court-end-left">
+              <div class="three-arc"></div><div class="paint"></div>
+              <div class="free-throw-circle"></div><div class="restricted-arc"></div>
+              <div class="hoop"><div class="backboard"></div><div class="rim"><span class="net"></span></div></div>
+            </div>
+            <div class="court-end court-end-right">
+              <div class="three-arc"></div><div class="paint"></div>
+              <div class="free-throw-circle"></div><div class="restricted-arc"></div>
+              <div class="hoop"><div class="backboard"></div><div class="rim"><span class="net"></span></div></div>
+            </div>
+          </div>
+          <div class="shot-ball" aria-hidden="true" hidden></div>
+          <div class="court-sprite sprite-blue blue-one" aria-hidden="true"><span class="sprite-shadow"></span><span class="sprite-arm-back"></span><span class="sprite-head"></span><span class="sprite-body"></span><span class="sprite-arm"></span><span class="sprite-ball"></span><span class="sprite-legs"></span></div>
+          <div class="court-sprite sprite-blue blue-two" aria-hidden="true"><span class="sprite-shadow"></span><span class="sprite-arm-back"></span><span class="sprite-head"></span><span class="sprite-body"></span><span class="sprite-arm"></span><span class="sprite-legs"></span></div>
+          <div class="court-sprite sprite-blue blue-three" aria-hidden="true"><span class="sprite-shadow"></span><span class="sprite-arm-back"></span><span class="sprite-head"></span><span class="sprite-body"></span><span class="sprite-arm"></span><span class="sprite-legs"></span></div>
+          <div class="court-sprite sprite-blue blue-four" aria-hidden="true"><span class="sprite-shadow"></span><span class="sprite-arm-back"></span><span class="sprite-head"></span><span class="sprite-body"></span><span class="sprite-arm"></span><span class="sprite-legs"></span></div>
+          <div class="court-sprite sprite-blue blue-five" aria-hidden="true"><span class="sprite-shadow"></span><span class="sprite-arm-back"></span><span class="sprite-head"></span><span class="sprite-body"></span><span class="sprite-arm"></span><span class="sprite-legs"></span></div>
+          <div class="court-sprite sprite-red red-one" aria-hidden="true"><span class="sprite-shadow"></span><span class="sprite-arm-back"></span><span class="sprite-head"></span><span class="sprite-body"></span><span class="sprite-arm"></span><span class="sprite-legs"></span></div>
+          <div class="court-sprite sprite-red red-two" aria-hidden="true"><span class="sprite-shadow"></span><span class="sprite-arm-back"></span><span class="sprite-head"></span><span class="sprite-body"></span><span class="sprite-arm"></span><span class="sprite-legs"></span></div>
+          <div class="court-sprite sprite-red red-three" aria-hidden="true"><span class="sprite-shadow"></span><span class="sprite-arm-back"></span><span class="sprite-head"></span><span class="sprite-body"></span><span class="sprite-arm"></span><span class="sprite-legs"></span></div>
+          <div class="court-sprite sprite-red red-four" aria-hidden="true"><span class="sprite-shadow"></span><span class="sprite-arm-back"></span><span class="sprite-head"></span><span class="sprite-body"></span><span class="sprite-arm"></span><span class="sprite-legs"></span></div>
+          <div class="court-sprite sprite-red red-five" aria-hidden="true"><span class="sprite-shadow"></span><span class="sprite-arm-back"></span><span class="sprite-head"></span><span class="sprite-body"></span><span class="sprite-arm"></span><span class="sprite-legs"></span></div>
+          <div class="court-sprite sprite-official" aria-hidden="true"><span class="sprite-shadow"></span><span class="sprite-arm-back"></span><span class="sprite-head"></span><span class="sprite-body"></span><span class="sprite-arm"></span><span class="sprite-legs"></span></div>
+          <div class="play-call" id="play-call" aria-live="polite"></div>
+        </div>
+<section class="versus-panel"><div class="versus-status"><span id="round-label">READY TO PLAY</span><strong id="clock">30</strong></div><h1 id="headline">Go head to head.</h1><p id="hint">Seven questions. Rarer answers score more.</p><div id="match-info" class="match-info" aria-live="polite">Find a player, or play a bot after 10 seconds.</div><form id="versus-form" class="answer-form hidden" autocomplete="off"><label class="sr-only" for="versus-answer">Your answer</label><div class="answer-entry"><input id="versus-answer" maxlength="64" placeholder="Type a player or team…"><button type="submit">SUBMIT</button></div></form><div class="versus-actions"><button id="find-match" class="primary-button" type="button">FIND MATCH</button><button id="cancel-search" class="primary-button hidden" type="button">CANCEL SEARCH</button></div><div id="reveal" class="reveal" aria-live="polite"></div></section><div class="arena-bottomline"><span>ONLINE 1V1</span><span>DEEP CUTS WIN</span></div></section></main></body></html>

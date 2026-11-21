@@ -787,7 +787,7 @@ function showDailyHome() {
   scoreElement.textContent = "000";
   redScoreElement.textContent = "00";
   $("#period").textContent = "TIP OFF";
-  $("#start-label").textContent = saved ? "RESUME" : "TIP OFF";
+  $("#start-label").textContent = saved ? "RESUME DAILY" : "DAILY GAME";
 }
 
 form.addEventListener("submit", (event) => {
