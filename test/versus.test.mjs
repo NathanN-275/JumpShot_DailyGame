@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { Match, Queue } from '../worker/index.mjs';
+import bank from '../worker/bank.json' with { type: 'json' };
 
 function context() {
   const values = new Map();
@@ -10,26 +11,35 @@ function context() {
   };
 }
 
-test('a rarer steal removes the opponent base score and grants only the steal bonus', async () => {
+test('a six-second steal window closes on the first successful steal and prevents a steal back', async t => {
+  const now = Date.now();
+  t.mock.method(Date, 'now', () => now);
   const ctx = context();
   const match = new Match(ctx, {});
   const tickets = ['a', 'b'];
   await match.fetch(new Request('https://match/init', { method: 'POST', body: JSON.stringify({ id: 'one', tickets, bot: false }) }));
   const state = await ctx.storage.get('state');
+  state.deck[0] = 0;
   state.answers = [{ name: 'Common', tier: 'dunk', points: 10 }, { name: 'Uncommon', tier: 'jumpshot', points: 50 }];
-  state.deadline = Date.now() - 1;
+  state.deadline = now - 1;
   await ctx.storage.put('state', state);
   await match.alarm();
   const counter = await ctx.storage.get('state');
   assert.equal(counter.phase, 'counter');
   assert.equal(counter.stealSeat, 0);
-  counter.steal = { name: 'Rare', tier: 'three', points: 100 };
-  counter.deadline = Date.now() - 1;
-  await ctx.storage.put('state', counter);
-  await match.alarm();
+  assert.equal(counter.deadline, now + 6000);
+
+  const submit = (seat, answer) => match.webSocketMessage({ deserializeAttachment: () => ({ seat }), send() {} }, JSON.stringify({ answer }));
+  const [stealAnswer] = bank.names[0].answers.find(([, tier]) => tier === 'three');
+  const [rarerAnswer] = bank.names[0].answers.find(([, tier]) => tier === 'half');
+  await submit(0, stealAnswer);
   const result = await ctx.storage.get('state');
   assert.equal(result.phase, 'reveal');
+  assert.equal(result.steal.name, stealAnswer);
   assert.deepEqual(result.scores, [30, 0]);
+
+  await submit(1, rarerAnswer);
+  assert.deepEqual(await ctx.storage.get('state'), result);
 });
 
 test('a finished match returns the scored answer history and complete bank only to its players', async () => {

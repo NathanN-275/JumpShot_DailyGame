@@ -12,7 +12,9 @@
 .match-info.is-steal { color: #ffad4d; }
 .match-info.searching::after { content: ' ...'; animation: search-pulse 1s steps(4, end) infinite; }
 @keyframes search-pulse { 50% { opacity: .2; } }
-.versus-actions { width: min(340px, 100%); margin-top: 13px; }
+.versus-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-top: 13px; }
+.versus-actions .primary-button { width: min(340px, 100%); }
+.versus-home-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 10px; color: var(--ink); font-weight: 700; }
 .versus-panel .answer-entry { max-width: 620px; }
 .versus-panel .answer-entry input { padding: 12px; min-width: 0; flex: 1; }
 .versus-panel .answer-entry button { min-width: 100px; background: var(--yellow); color: #241911; font-weight: 800; }
@@ -22,6 +24,8 @@
 .versus-mode .results-panel { margin: 0 0 18px; }
 .versus-mode .court-sprite { transition: left .45s ease, top .45s ease; }
 .versus-mode .sprite-red { --facing: -1; }
+.versus-mode .is-blue-defending .blue-one .sprite-ball { visibility: hidden; }
+.versus-mode .is-blue-defending .red-one .sprite-ball { display: block; }
 @media (max-width: 620px) {
   .versus-mode .topbar { grid-template-columns: 1fr; height: auto; }
   .versus-mode .scorebug { grid-column: 1; }

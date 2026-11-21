@@ -4,6 +4,7 @@ let ticket = null;
 let matchId = null;
 let socket = null;
 let poll = null;
+let searchId = 0;
 let clock = null;
 let state = null;
 let serverOffset = 0;
@@ -25,10 +26,17 @@ function clearSession() {
 function setStatus(text) { $('#match-info').textContent = text; }
 function setSearching(active) {
   $('#find-match').classList.toggle('hidden', active);
+  $('#back-home').classList.toggle('hidden', active);
   $('#cancel-search').classList.toggle('hidden', !active);
   $('#match-info').classList.toggle('searching', active);
 }
+function removeQueueTicket(cancelledTicket) {
+  return fetch(`${api}/api/queue?ticket=${encodeURIComponent(cancelledTicket)}`, {
+    method: 'DELETE', keepalive: true,
+  }).catch(() => {});
+}
 async function startQueue() {
+  const currentSearch = ++searchId;
   state = null;
   lastReveal = -1; lastRoundMotion = -1; lastPreparedRound = -1; lastReviewMatch = null;
   $('#versus-final-score').classList.add('hidden');
@@ -41,28 +49,46 @@ async function startQueue() {
     const response = await fetch(`${api}/api/queue`, { method: 'POST' });
     if (!response.ok) throw new Error('Matchmaking is unavailable.');
     const result = await response.json();
+    if (currentSearch !== searchId) {
+      void removeQueueTicket(result.ticket);
+      return;
+    }
     ticket = result.ticket;
     if (result.match) connect(result.match);
-    else poll = setInterval(checkQueue, 750);
-  } catch (error) { setSearching(false); setStatus(error.message); }
+    else poll = setTimeout(() => checkQueue(currentSearch), 750);
+  } catch (error) {
+    if (currentSearch !== searchId) return;
+    setSearching(false);
+    setStatus(error.message);
+  }
 }
-async function checkQueue() {
-  if (!ticket || matchId) return;
+async function checkQueue(currentSearch) {
+  if (currentSearch !== searchId || !ticket || matchId) return;
   try {
     const response = await fetch(`${api}/api/queue?ticket=${encodeURIComponent(ticket)}`);
     if (!response.ok) throw new Error('Search ended. Please try again.');
     const result = await response.json();
+    if (currentSearch !== searchId) return;
     if (result.match) connect(result.match);
-  } catch (error) { clearInterval(poll); setSearching(false); setStatus(error.message); }
+    else poll = setTimeout(() => checkQueue(currentSearch), 750);
+  } catch (error) {
+    if (currentSearch !== searchId) return;
+    setSearching(false);
+    setStatus(error.message);
+  }
 }
-async function cancelQueue() {
-  clearInterval(poll);
-  if (ticket && !matchId) await fetch(`${api}/api/queue?ticket=${encodeURIComponent(ticket)}`, { method: 'DELETE' }).catch(() => {});
-  ticket = null; setSearching(false); setStatus('Search cancelled.');
+function cancelQueue() {
+  searchId++;
+  clearTimeout(poll);
+  if (ticket) void removeQueueTicket(ticket);
+  ticket = null;
+  setSearching(false);
+  setStatus('Search cancelled.');
+  $('#back-home').focus();
 }
 function connect(id) {
-  clearInterval(poll); matchId = id; setSearching(false);
-  $('#find-match').classList.add('hidden');
+  clearTimeout(poll); matchId = id; setSearching(false);
+  $('.versus-actions').classList.add('hidden');
   if (!reconnectUntil) reconnectUntil = Date.now() + 15000;
   saveSession();
   const url = new URL(`${api}/api/match/${id}`);
@@ -77,7 +103,13 @@ function connect(id) {
   socket.onclose = () => {
     if (state?.phase === 'done') return;
     setStatus('Reconnecting…');
-    if (Date.now() >= reconnectUntil) { clearSession(); matchId = null; setStatus('Match connection ended. Find a new match.'); $('#find-match').classList.remove('hidden'); return; }
+    if (Date.now() >= reconnectUntil) {
+      clearSession();
+      matchId = null;
+      setStatus('Match connection ended. Find a new match.');
+      $('.versus-actions').classList.remove('hidden');
+      return;
+    }
     setTimeout(() => { if (matchId) connect(matchId); }, 1000);
   };
   socket.onerror = () => setStatus('Connection interrupted.');
@@ -174,12 +206,12 @@ function render() {
   $('#hint').textContent = phase === 'done' ? 'Thanks for playing.' : state.hint || 'The deeper the cut, the bigger the bucket.';
   const canAnswer = phase === 'answer' && !submitted[seat] || phase === 'counter' && stealSeat === seat && !steal;
   form.classList.toggle('hidden', !canAnswer);
-  $('#find-match').classList.toggle('hidden', phase !== 'done');
+  $('.versus-actions').classList.toggle('hidden', phase !== 'done');
   $('#match-info').classList.toggle('is-steal', phase === 'counter');
   if (phase === 'answer' && lastPreparedRound !== round) { lastPreparedRound = round; resetCourtShot(); }
   if (phase === 'answer') setStatus(submitted[seat] ? 'Answer locked. Waiting for the other player and the shot clock.' : 'Submit one valid answer before the clock expires.');
   if (phase === 'answer' && submitted[seat] && lastRoundMotion !== round) { lastRoundMotion = round; animateVersusTeams(seat); }
-  if (phase === 'counter') setStatus(stealSeat === seat ? `Beat their ${answers[1 - seat]?.points || 0}-point tier in 10 seconds to steal.` : 'Your opponent has 10 seconds to attempt a steal.');
+  if (phase === 'counter') setStatus(stealSeat === seat ? `Beat their ${answers[1 - seat]?.points || 0}-point tier before the clock expires.` : 'Your opponent has a chance to steal.');
   if (phase === 'reveal') {
     const summary = answers.map((answer, i) => `${i === seat ? 'You' : 'Opponent'}: ${answer?.name || 'No answer'} (${answer?.points || 0})`).join(' · ');
     $('#reveal').textContent = `${summary}${steal ? ` · STEAL: ${steal.name}` : ''}`;

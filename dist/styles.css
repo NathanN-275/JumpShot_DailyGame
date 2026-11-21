@@ -83,6 +83,7 @@ button { color: inherit; }
   transform: translate(-50%, -50%) scale(var(--player-scale, 1)) scaleX(var(--facing, 1));
 }
 .sprite-red { --facing: -1; }
+.court.is-blue-defending .sprite-blue { --facing: -1; }
 .blue-one { left: 60%; top: 43%; z-index: 6; }
 .blue-two { left: 68%; top: 20%; --sprite-row: 1; --player-scale: .85; }
 .blue-three { left: 88%; top: 9%; --sprite-row: 2; --player-scale: .82; }

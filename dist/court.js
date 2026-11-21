@@ -26,6 +26,7 @@ const flightBall = court.querySelector(".shot-ball");
 const scoringRim = court.querySelector(".court-end-right .rim");
 const scoringNet = scoringRim.querySelector(".net");
 const redRunner = court.querySelector(".red-one");
+const redHeldBall = redRunner.querySelector(".sprite-ball");
 const redRebounder = court.querySelector(".red-five");
 const redWing = court.querySelector(".red-four");
 const redRim = court.querySelector(".court-end-left .rim");
@@ -33,6 +34,7 @@ const crowdSections = document.querySelectorAll(".crowd");
 const shotAnimations = [];
 
 function resetCourtShot() {
+  court.classList.remove("is-blue-defending");
   for (const animation of shotAnimations) animation.cancel();
   shotAnimations.length = 0;
   flightBall.hidden = true;
@@ -117,6 +119,7 @@ function reactToBlueShot(tier, space, plantX, plantY, motion) {
 }
 
 async function playCourtShot(tier, { miss = false } = {}) {
+  court.classList.remove("is-blue-defending");
   if (!canAnimateCourt()) return;
 
   const motion = SHOT_MOTION[tier];
@@ -193,15 +196,19 @@ async function playCourtShot(tier, { miss = false } = {}) {
 }
 
 async function playRedFastBreak(finish) {
-  if (!canAnimateCourt()) return;
+  if (!canAnimateCourt()) {
+    court.classList.add("is-blue-defending");
+    return;
+  }
 
   const space = courtSpace();
   const { position, center } = space;
   const scale = redRunner.getBoundingClientRect().height / redRunner.offsetHeight;
-  const steal = center(heldBall);
+  const redHasBall = Boolean(redHeldBall) && court.classList.contains("is-blue-defending");
+  const steal = redHasBall ? null : center(heldBall);
   const basket = center(redRim);
   const handOffset = 18 * scale;
-  const pickup = { x: steal.x + handOffset, y: steal.y - 8 * scale };
+  const pickup = redHasBall ? center(redRunner) : { x: steal.x + handOffset, y: steal.y - 8 * scale };
   const layup = finish.x === undefined;
   const drive = layup
     ? { x: basket.x + 34 * scale, y: basket.y + 48 * scale }
@@ -209,9 +216,12 @@ async function playRedFastBreak(finish) {
   const jump = { x: drive.x - (layup ? 14 * scale : 0), y: drive.y - 30 * scale };
   const runnerAt = ({ x, y }) => position(x, y);
 
-  animateCourtPiece(redRunner.querySelector(".sprite-arm"), [{ rotate: "0deg" }, { rotate: "-45deg" }, { rotate: "0deg" }], { duration: 390 });
-  await movePlayer(redRunner, space, pickup.x, pickup.y, 310).finished;
-  animateCourtPiece(heldBall, [{ opacity: 0 }], { duration: 1, fill: "forwards" });
+  if (!redHasBall) {
+    animateCourtPiece(redRunner.querySelector(".sprite-arm"), [{ rotate: "0deg" }, { rotate: "-45deg" }, { rotate: "0deg" }], { duration: 390 });
+    await movePlayer(redRunner, space, pickup.x, pickup.y, 310).finished;
+  }
+  court.classList.add("is-blue-defending");
+  animateCourtPiece(redHeldBall ?? heldBall, [{ opacity: 0 }], { duration: 1, fill: "forwards" });
   flightBall.hidden = false;
 
   const duration = 1160;
@@ -251,6 +261,7 @@ async function playRedFastBreak(finish) {
 }
 
 function animateVersusTeams(seat) {
+  court.classList.toggle("is-blue-defending", seat === 1);
   if (!canAnimateCourt()) return;
   const space = courtSpace();
   if (seat === 0) {
@@ -260,7 +271,7 @@ function animateVersusTeams(seat) {
     movePlayer(court.querySelector('.red-three'), space, space.width * .7, space.height * .22, 900);
   } else {
     movePlayer(redRunner, space, space.width * .46, space.height * .55, 850);
-    movePlayer(shooter, space, space.width * .42, space.height * .57, 850);
+    movePlayer(shooter, space, space.width * .52, space.height * .57, 850);
     movePlayer(court.querySelector('.red-four'), space, space.width * .35, space.height * .74, 900);
     movePlayer(court.querySelector('.blue-four'), space, space.width * .4, space.height * .72, 900);
   }

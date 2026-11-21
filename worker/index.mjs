@@ -2,6 +2,7 @@ import bank from './bank.json' with { type: 'json' };
 
 const points = { dunk: 10, jumpshot: 50, three: 100, half: 200 };
 const bonus = { jumpshot: 15, three: 20, half: 30 };
+const STEAL_WINDOW_MS = 6000;
 const normalize = value => String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
 const all = [...bank.names, ...bank.history];
 const random = size => crypto.getRandomValues(new Uint32Array(1))[0] % size;
@@ -97,14 +98,24 @@ export class Match {
   async webSocketMessage(ws, message) {
     const seat = ws.deserializeAttachment()?.seat;
     const state = await this.ctx.storage.get('state');
-    if (!state || state.phase === 'done' || seat === undefined) return;
+    if (!state || !['answer', 'counter'].includes(state.phase) || seat === undefined) return;
     let payload; try { payload = JSON.parse(message); } catch { return; }
-    if (Date.now() > state.deadline || typeof payload.answer !== 'string') return;
+    const now = Date.now();
+    if (now >= state.deadline || typeof payload.answer !== 'string') return;
     const match = accepted(all[state.deck[state.round]], payload.answer);
     if (!match) { ws.send(JSON.stringify({ error: 'Answer not in the bank. Try again.' })); return; }
-    if (state.phase === 'answer' && !state.answers[seat]) state.answers[seat] = match;
-    else if (state.phase === 'counter' && state.stealSeat === seat && !state.steal && match.points > (state.answers[1 - seat]?.points || 0) && match.name !== state.answers[seat]?.name && match.name !== state.answers[1 - seat]?.name) state.steal = match;
-    else { ws.send(JSON.stringify({ error: 'That answer cannot steal this shot.' })); return; }
+    const canSteal = state.phase === 'counter' && state.stealSeat === seat && !state.steal
+      && match.points > (state.answers[1 - seat]?.points || 0)
+      && !state.answers.some(answer => answer?.name === match.name);
+    if (state.phase === 'answer' && !state.answers[seat]) {
+      state.answers[seat] = match;
+    } else if (canSteal) {
+      state.steal = match;
+      this.settle(state, now);
+    } else {
+      ws.send(JSON.stringify({ error: 'That answer cannot steal this shot.' }));
+      return;
+    }
     await this.save(state); this.broadcast(state);
   }
   async webSocketClose(ws) {
@@ -125,11 +136,14 @@ export class Match {
       const a = state.answers.map(answer => answer?.points || 0);
       state.stealSeat = a[0] === a[1] || Math.max(...a) === 200 ? null : a[0] < a[1] ? 0 : 1;
       if (state.stealSeat !== null) {
-        state.phase = 'counter'; state.deadline = now + 10000;
+        state.phase = 'counter'; state.deadline = now + STEAL_WINDOW_MS;
         if (state.bot && state.stealSeat === 1) {
           const q = all[state.deck[state.round]];
           const [name, tier] = q.answers[random(q.answers.length)];
-          if (points[tier] > a[0] && name !== state.answers[1]?.name && name !== state.answers[0]?.name) state.steal = { name, tier, points: points[tier] };
+          if (points[tier] > a[0] && !state.answers.some(answer => answer?.name === name)) {
+            state.steal = { name, tier, points: points[tier] };
+            this.settle(state, now);
+          }
         }
       } else this.settle(state, now);
     } else if (now >= state.deadline && state.phase === 'counter') this.settle(state, now);
