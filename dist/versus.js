@@ -17,7 +17,6 @@ const tiers = { half: ['HALF COURT', 200], three: ['THREE', 100], jumpshot: ['JU
 const form = $('#versus-form');
 const input = $('#versus-answer');
 const reveal = $('#reveal');
-const rules = $('#versus-rules');
 const sessionKey = 'jumpshot-versus-match';
 function saveSession() {
   try { sessionStorage.setItem(sessionKey, JSON.stringify({ ticket, matchId })); } catch { /* Browser storage may be disabled. */ }
@@ -242,9 +241,7 @@ form.addEventListener('submit', event => {
 });
 $('#find-match').addEventListener('click', startQueue);
 $('#cancel-search').addEventListener('click', cancelQueue);
-rules.addEventListener('close', () => $('#find-match').focus());
 try {
   const saved = JSON.parse(sessionStorage.getItem(sessionKey) || 'null');
   if (saved?.ticket && saved?.matchId) { ticket = saved.ticket; connect(saved.matchId); }
 } catch { clearSession(); }
-if (!matchId) rules.showModal();
