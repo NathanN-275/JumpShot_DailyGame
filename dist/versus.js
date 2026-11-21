@@ -16,6 +16,8 @@ let lastReviewMatch = null;
 const tiers = { half: ['HALF COURT', 200], three: ['THREE', 100], jumpshot: ['JUMP SHOT', 50], dunk: ['DUNK', 10] };
 const form = $('#versus-form');
 const input = $('#versus-answer');
+const reveal = $('#reveal');
+const rules = $('#versus-rules');
 const sessionKey = 'jumpshot-versus-match';
 function saveSession() {
   try { sessionStorage.setItem(sessionKey, JSON.stringify({ ticket, matchId })); } catch { /* Browser storage may be disabled. */ }
@@ -191,8 +193,13 @@ async function loadReview(id, ticket, seat) {
   try {
     const response = await fetch(`${api}/api/match/${encodeURIComponent(id)}/review?ticket=${encodeURIComponent(ticket)}`);
     if (!response.ok) throw new Error('Could not load the answer bank.');
-    renderReview(await response.json(), seat);
-  } catch (error) { setStatus(error.message); lastReviewMatch = null; }
+    const review = await response.json();
+    if (lastReviewMatch === id) renderReview(review, seat);
+  } catch (error) {
+    if (lastReviewMatch !== id) return;
+    setStatus(error.message);
+    lastReviewMatch = null;
+  }
 }
 function render() {
   const { seat, bot, phase, round, answers, submitted, scores, stealSeat, steal, winner } = state;
@@ -212,9 +219,10 @@ function render() {
   if (phase === 'answer') setStatus(submitted[seat] ? 'Answer locked. Waiting for the other player and the shot clock.' : 'Submit one valid answer before the clock expires.');
   if (phase === 'answer' && submitted[seat] && lastRoundMotion !== round) { lastRoundMotion = round; animateVersusTeams(seat); }
   if (phase === 'counter') setStatus(stealSeat === seat ? `Beat their ${answers[1 - seat]?.points || 0}-point tier before the clock expires.` : 'Your opponent has a chance to steal.');
+  reveal.classList.toggle('hidden', phase !== 'reveal');
   if (phase === 'reveal') {
     const summary = answers.map((answer, i) => `${i === seat ? 'You' : 'Opponent'}: ${answer?.name || 'No answer'} (${answer?.points || 0})`).join(' · ');
-    $('#reveal').textContent = `${summary}${steal ? ` · STEAL: ${steal.name}` : ''}`;
+    reveal.textContent = `${summary}${steal ? ` · STEAL: ${steal.name}` : ''}`;
     setStatus(steal ? 'Shot blocked! A steal changed the score.' : 'Round complete.');
     if (lastReveal !== round) {
       lastReveal = round;
@@ -222,7 +230,7 @@ function render() {
       if (shooterSeat === 0 && answers[0]) playCourtShot(answers[0].tier, { miss: !!steal && stealSeat === 1 }).catch(() => {});
       else if (answers[1]) playRedFastBreak(RED_FINISHES[1]).catch(() => {});
     }
-  } else if (phase !== 'done') $('#reveal').textContent = '';
+  } else reveal.textContent = '';
   if (phase === 'done') { setStatus('Final score'); renderFinalScore(scores, seat); loadReview(matchId, ticket, seat); $('#find-match').textContent = 'PLAY AGAIN'; clearSession(); matchId = null; ticket = null; socket?.close(); }
   updateClock();
 }
@@ -234,7 +242,9 @@ form.addEventListener('submit', event => {
 });
 $('#find-match').addEventListener('click', startQueue);
 $('#cancel-search').addEventListener('click', cancelQueue);
+rules.addEventListener('close', () => $('#find-match').focus());
 try {
   const saved = JSON.parse(sessionStorage.getItem(sessionKey) || 'null');
   if (saved?.ticket && saved?.matchId) { ticket = saved.ticket; connect(saved.matchId); }
 } catch { clearSession(); }
+if (!matchId) rules.showModal();
