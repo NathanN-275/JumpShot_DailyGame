@@ -7,5 +7,5 @@
     { "name": "MATCH", "class_name": "Match" }
   ] },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Queue", "Match"] }],
-  "vars": { "FRONTEND_ORIGIN": "http://localhost:8000" }
+  "vars": { "FRONTEND_ORIGIN": "https://nathann-275.github.io" }
 }
