@@ -16,6 +16,6 @@ Run `node --test` to check answer matching and the daily rotation.
 
 The [versus plan](docs/versus-plan.md) describes online matchmaking, bot fallback, steals, and mobile play. GitHub Pages still hosts `dist/`; a Cloudflare Worker and Durable Objects run the live matches.
 
-For local development, run `npm install`, `npm run bank`, `npm run dev:worker`, and serve `dist/` at `http://localhost:8000`. When testing locally, set `FRONTEND_ORIGIN` to `http://localhost:8000` for that Wrangler session. The versus page uses `http://localhost:8787` until a deployed endpoint is set in `dist/versus-config.js`.
+For local development, run `npm install`, `npm run bank`, `npx wrangler dev --local --port 8787 --var FRONTEND_ORIGIN:http://localhost:8000`, and `python3 -m http.server 8000 --directory dist`. Open `http://localhost:8000/`. The versus page automatically uses the local Worker on localhost and the deployed Worker elsewhere.
 
 The Worker endpoint is configured in `dist/versus-config.js`. To publish backend changes, run `npm run deploy:worker` while signed into Cloudflare. The Worker data is generated from the existing daily question bank; the daily game's public scripts still expose those answers to anyone inspecting the site, so versus is intended as casual play.
