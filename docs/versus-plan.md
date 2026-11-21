@@ -3,7 +3,7 @@
 ## Rules
 
 - Search the live queue for 10 seconds with a visible searching animation. Match the first available human; otherwise start a bot match automatically. Cancel leaves the queue.
-- Each match has seven shared prompts, two name prompts and five trivia categories. Both opponents have 30 seconds to submit one accepted answer per prompt. Existing 10/50/100/200 tiers determine base points.
+- Each match has seven shared prompts, two name prompts and five trivia categories. Both opponents have 25 seconds to submit one accepted answer per prompt. Existing 10/50/100/200 tiers determine base points.
 - After the answer window, the player with a lower tier has 10 seconds to submit a different answer at a strictly higher tier than the opponent's. A successful steal removes the opponent's base points, preserves the defender's base points, and adds 15/20/30 points for a 50/100/200-point steal answer. Equal tiers and 200-point answers cannot be stolen.
 - The bot draws uniformly from the prompt's answer bank for its base answer and, if eligible, for its steal attempt. A player can reconnect within 15 seconds before forfeiting.
 

@@ -250,15 +250,18 @@ async function playRedFastBreak(finish) {
   flightBall.hidden = true;
 }
 
-function animateVersusTeams() {
+function animateVersusTeams(seat) {
   if (!canAnimateCourt()) return;
-  resetCourtShot();
   const space = courtSpace();
-  const lanes = [.34, .22, .55, .76, .64];
-  for (let index = 1; index <= 5; index++) {
-    movePlayer(court.querySelector(`.blue-${['one', 'two', 'three', 'four', 'five'][index - 1]}`), space,
-      space.width * (.57 + index * .064), space.height * lanes[index - 1], 1100 + index * 90);
-    movePlayer(court.querySelector(`.red-${['one', 'two', 'three', 'four', 'five'][index - 1]}`), space,
-      space.width * (.43 - index * .064), space.height * lanes[5 - index], 1100 + index * 90);
+  if (seat === 0) {
+    movePlayer(shooter, space, space.width * .72, space.height * .47, 850);
+    movePlayer(redRunner, space, space.width * .79, space.height * .46, 850);
+    movePlayer(court.querySelector('.blue-three'), space, space.width * .66, space.height * .2, 900);
+    movePlayer(court.querySelector('.red-three'), space, space.width * .7, space.height * .22, 900);
+  } else {
+    movePlayer(redRunner, space, space.width * .46, space.height * .55, 850);
+    movePlayer(shooter, space, space.width * .42, space.height * .57, 850);
+    movePlayer(court.querySelector('.red-four'), space, space.width * .35, space.height * .74, 900);
+    movePlayer(court.querySelector('.blue-four'), space, space.width * .4, space.height * .72, 900);
   }
 }

@@ -32,6 +32,25 @@ test('a rarer steal removes the opponent base score and grants only the steal bo
   assert.deepEqual(result.scores, [30, 0]);
 });
 
+test('a finished match returns the scored answer history and complete bank only to its players', async () => {
+  const ctx = context();
+  const match = new Match(ctx, {});
+  await match.fetch(new Request('https://match/init', { method: 'POST', body: JSON.stringify({ id: 'review', tickets: ['a', 'b'], bot: false }) }));
+  const state = await ctx.storage.get('state');
+  assert.ok(state.deadline - Date.now() <= 25000 && state.deadline - Date.now() > 24000);
+  assert.equal((await match.fetch(new Request('https://match/review?ticket=a'))).status, 409);
+  state.phase = 'done';
+  state.scores = [100, 50];
+  state.history = [{ answers: [{ name: 'First', tier: 'three', points: 100 }, { name: 'Second', tier: 'jumpshot', points: 50 }], steal: null, stealSeat: null }];
+  await ctx.storage.put('state', state);
+  assert.equal((await match.fetch(new Request('https://match/review?ticket=outsider'))).status, 403);
+  const review = await (await match.fetch(new Request('https://match/review?ticket=a'))).json();
+  assert.deepEqual(review.scores, [100, 50]);
+  assert.equal(review.questions.length, 7);
+  assert.equal(review.questions[0].played.answers[0].name, 'First');
+  assert.ok(review.questions[0].answers.length > 0);
+});
+
 test('one waiting player automatically gets a bot after ten seconds', async () => {
   const ctx = context();
   const created = [];

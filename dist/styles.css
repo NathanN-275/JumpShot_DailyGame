@@ -201,6 +201,8 @@ body.is-playing .results-panel { display: none; }
 .timer-track { stroke: #34445a; }
 .timer-progress { stroke: var(--green); stroke-linecap: round; stroke-dasharray: 113.1; stroke-dashoffset: 0; transition: stroke .2s; }
 .timer strong { color: var(--ink); font: 11px var(--pixel); }
+.timer.is-warning strong { color: #ffb75e; }
+.timer.is-warning .timer-progress { stroke: #ffb75e; }
 .timer.is-low strong { color: #ff8173; }
 .timer.is-low .timer-progress { stroke: #ff7163; }
 .question-content { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 18px 24px 12px; }

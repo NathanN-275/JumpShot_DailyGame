@@ -50,7 +50,7 @@ export class Match {
     if (request.method === 'POST' && url.pathname === '/init') {
       if (await this.ctx.storage.get('state')) return new Response('exists', { status: 409 });
       const { id, tickets, bot } = await request.json();
-      const state = { id, tickets, bot, deck: deck(), round: 0, phase: 'answer', deadline: Date.now() + 30000, scores: [0, 0], answers: [null, null], steal: null, stealSeat: null, disconnectedUntil: [Date.now() + 15000, bot ? null : Date.now() + 15000] };
+      const state = { id, tickets, bot, deck: deck(), history: [], round: 0, phase: 'answer', deadline: Date.now() + 25000, scores: [0, 0], answers: [null, null], steal: null, stealSeat: null, disconnectedUntil: [Date.now() + 15000, bot ? null : Date.now() + 15000] };
       chooseBot(state);
       await this.save(state);
       return Response.json({ ok: true });
@@ -60,6 +60,17 @@ export class Match {
     const ticket = url.searchParams.get('ticket');
     const seat = state.tickets.indexOf(ticket);
     if (seat < 0) return new Response('forbidden', { status: 403 });
+    if (request.method === 'GET' && url.pathname === '/review') {
+      if (state.phase !== 'done') return new Response('match in progress', { status: 409 });
+      return Response.json({ scores: state.scores, winner: state.winner, questions: state.deck.map((index, round) => {
+        const question = all[index];
+        return {
+          prompt: question.prompt,
+          answers: question.answers.map(([name, tier]) => [name, tier]),
+          played: state.history?.[round] || { answers: [null, null], steal: null, stealSeat: null },
+        };
+      }) });
+    }
     if (request.headers.get('Upgrade') === 'websocket') {
       const pair = new WebSocketPair();
       const [client, server] = Object.values(pair);
@@ -124,7 +135,7 @@ export class Match {
     } else if (now >= state.deadline && state.phase === 'counter') this.settle(state, now);
     else if (now >= state.deadline && state.phase === 'reveal') {
       if (++state.round === 7) { state.phase = 'done'; state.winner = state.scores[0] === state.scores[1] ? -1 : state.scores[0] > state.scores[1] ? 0 : 1; state.deadline = null; }
-      else { state.phase = 'answer'; state.deadline = now + 30000; state.answers = [null, null]; state.steal = null; state.stealSeat = null; chooseBot(state); }
+      else { state.phase = 'answer'; state.deadline = now + 25000; state.answers = [null, null]; state.steal = null; state.stealSeat = null; chooseBot(state); }
     }
     await this.save(state); this.broadcast(state);
   }
@@ -134,6 +145,8 @@ export class Match {
       state.scores[1 - state.stealSeat] -= state.answers[1 - state.stealSeat]?.points || 0;
       state.scores[state.stealSeat] += bonus[state.steal.tier] || 0;
     }
+    state.history ||= [];
+    state.history[state.round] = { answers: state.answers, steal: state.steal, stealSeat: state.stealSeat };
     state.phase = 'reveal'; state.deadline = now + 3500;
   }
 }
@@ -191,7 +204,7 @@ export default {
     if (request.method === 'OPTIONS') return new Response(null, { headers });
     const route = url.pathname.startsWith('/api/queue') ? env.QUEUE.getByName('global') : url.pathname.startsWith('/api/match/') ? env.MATCH.getByName(url.pathname.split('/')[3]) : null;
     if (!route) return new Response('not found', { status: 404, headers });
-    const target = url.pathname.startsWith('/api/queue') ? `https://queue/${request.method === 'POST' ? 'join' : 'status'}${url.search}` : `https://match/${url.search}`;
+    const target = url.pathname.startsWith('/api/queue') ? `https://queue/${request.method === 'POST' ? 'join' : 'status'}${url.search}` : `https://match/${url.pathname.endsWith('/review') ? 'review' : ''}${url.search}`;
     const response = await route.fetch(new Request(target, request));
     if (response.status === 101) return response;
     const result = new Response(response.body, response);

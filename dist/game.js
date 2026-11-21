@@ -1,5 +1,5 @@
 const RUN_LENGTH = 7;
-const QUESTION_SECONDS = 30;
+const QUESTION_SECONDS = 25;
 const BEST_SCORE_KEY = "jumpshot-best-score";
 const DAILY_KEY = "jumpshot-day-";
 const DAILY_TZ = "America/New_York";
@@ -443,7 +443,8 @@ function setTimer(value) {
   secondsLeft = value;
   timerElement.textContent = String(value).padStart(2, "0");
   timerRing.style.strokeDashoffset = String(113.1 * (1 - value / QUESTION_SECONDS));
-  timerElement.parentElement.classList.toggle("is-low", value <= 8);
+  timerElement.parentElement.classList.toggle("is-warning", value <= 10 && value > 5);
+  timerElement.parentElement.classList.toggle("is-low", value <= 5);
 }
 
 function clearPlayState() {
@@ -487,7 +488,7 @@ function showQuestion(resumeDeadline = null) {
   }
   const question = runQuestions[questionIndex];
   questionNumberElement.textContent = String(questionIndex + 1).padStart(2, "0");
-  $("#period").textContent = `Q${questionIndex + 1} · 30 SEC`;
+  $("#period").textContent = `Q${questionIndex + 1} · ${QUESTION_SECONDS} SEC`;
   promptElement.textContent = question.prompt;
   $("#prompt-hint").textContent = question.hint;
   answerInput.placeholder = question.team ? "Type a team name…" : "Type a player name…";
